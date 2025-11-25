@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .tab-active { background-color: white; color: #0f172a; font-weight: 600; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); }
@@ -16,30 +15,36 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .card-container { z-index: 10; }
         .card-container:hover { z-index: 20; }
-        
-        /* Toast Animation */
         .toast-enter { transform: translateX(100%); opacity: 0; }
         .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 0.3s ease-out; }
         .toast-exit { transform: translateX(0); opacity: 1; }
         .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 0.3s ease-in; }
+        /* Modal Transitions */
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow-x: hidden; overflow-y: hidden !important; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="text-slate-800" onclick="closeAllDropdowns()">
+<body class="text-slate-800" onclick="if(window.closeAllDropdowns) window.closeAllDropdowns()">
 
     <div id="toast-container" class="fixed top-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
     <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 z-[90] hidden flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 transform scale-100 transition-transform">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4">
             <div class="text-center mb-6">
                 <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 text-orange-600">
                     <i class="fa-solid fa-circle-exclamation text-xl"></i>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800" id="confirmTitle">Confirm Action</h3>
-                <p class="text-sm text-slate-500 mt-1" id="confirmMessage">Are you sure you want to proceed?</p>
+                <h3 class="text-lg font-bold text-slate-800" id="confirmTitle">Confirm</h3>
+                <p class="text-sm text-slate-500 mt-1" id="confirmMessage">Are you sure?</p>
             </div>
             <div class="flex gap-3">
-                <button onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
-                <button id="confirmBtnAction" class="flex-1 py-2.5 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 shadow-lg shadow-teal-500/30">Confirm</button>
+                <button onclick="closeConfirmModal()" class="flex-1 py-2 rounded-lg border border-slate-300 hover:bg-slate-50">Cancel</button>
+                <button id="confirmBtnAction" class="flex-1 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700">Confirm</button>
             </div>
         </div>
     </div>
@@ -53,7 +58,7 @@
                     </div>
                     <div>
                         <h1 class="text-xl font-bold text-slate-900 leading-tight">CueZone</h1>
-                        <p class="text-xs text-slate-500">Hall Management System</p>
+                        <p class="text-xs text-slate-500">Hall Management</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
@@ -71,34 +76,21 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-white rounded-xl border-l-4 border-emerald-500 shadow-sm p-5 flex justify-between items-center">
-                <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase">Active Tables</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1" id="statActiveTables">0</p>
-                </div>
+                <div><p class="text-xs font-medium text-slate-500 uppercase">Active</p><p class="text-2xl font-bold text-slate-800 mt-1" id="statActiveTables">0</p></div>
                 <div class="bg-emerald-50 p-3 rounded-lg text-emerald-600"><i class="fa-solid fa-chart-line"></i></div>
             </div>
             <div class="bg-white rounded-xl border-l-4 border-teal-500 shadow-sm p-5 flex justify-between items-center">
-                <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase">Available</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1" id="statAvailableTables">0</p>
-                </div>
+                <div><p class="text-xs font-medium text-slate-500 uppercase">Available</p><p class="text-2xl font-bold text-slate-800 mt-1" id="statAvailableTables">0</p></div>
                 <div class="bg-teal-50 p-3 rounded-lg text-teal-600"><i class="fa-solid fa-people-group"></i></div>
             </div>
             <div class="bg-white rounded-xl border-l-4 border-blue-500 shadow-sm p-5 flex justify-between items-center">
-                <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase">Members</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1" id="statTotalMembers">0</p>
-                </div>
+                <div><p class="text-xs font-medium text-slate-500 uppercase">Members</p><p class="text-2xl font-bold text-slate-800 mt-1" id="statTotalMembers">0</p></div>
                 <div class="bg-blue-50 p-3 rounded-lg text-blue-600"><i class="fa-solid fa-id-card"></i></div>
             </div>
             <div class="bg-white rounded-xl border-l-4 border-orange-400 shadow-sm p-5 flex justify-between items-center">
-                <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase">Revenue</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1">₹<span id="statRevenue">0</span></p>
-                </div>
+                <div><p class="text-xs font-medium text-slate-500 uppercase">Revenue</p><p class="text-2xl font-bold text-slate-800 mt-1">₹<span id="statRevenue">0</span></p></div>
                 <div class="bg-orange-50 p-3 rounded-lg text-orange-500"><i class="fa-solid fa-indian-rupee-sign"></i></div>
             </div>
         </div>
@@ -108,11 +100,12 @@
             <button onclick="switchTab('orders')" id="btn-orders" class="flex-1 py-2 px-4 rounded-lg tab-inactive whitespace-nowrap transition-all">Active Orders</button>
             <button onclick="switchTab('products')" id="btn-products" class="flex-1 py-2 px-4 rounded-lg tab-inactive whitespace-nowrap transition-all">Products</button>
             <button onclick="switchTab('members')" id="btn-members" class="flex-1 py-2 px-4 rounded-lg tab-inactive whitespace-nowrap transition-all">Members</button>
+            <button onclick="switchTab('transactions')" id="btn-transactions" class="flex-1 py-2 px-4 rounded-lg tab-inactive whitespace-nowrap transition-all">Transactions</button>
         </div>
 
         <div id="view-tables" class="fade-in">
             <div class="flex justify-between items-center mb-6">
-                <div><h2 class="text-xl font-bold text-slate-800">Table Management</h2></div>
+                <h2 class="text-xl font-bold text-slate-800">Table Management</h2>
                 <button onclick="openAddTableModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg shadow-md transition-colors text-sm font-medium"><i class="fa-solid fa-plus"></i> Add Table</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="tablesGrid"></div>
@@ -124,183 +117,209 @@
 
         <div id="view-products" class="hidden fade-in">
             <div class="flex justify-between items-center mb-6">
-                <div><h2 class="text-xl font-bold text-slate-800">Products Inventory</h2></div>
-                <button onclick="openProductModal()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg shadow-md text-sm font-medium"><i class="fa-solid fa-plus"></i> Add Product</button>
+                <h2 class="text-xl font-bold text-slate-800">Products Inventory</h2>
+                <div class="flex gap-2">
+                    <button onclick="openQuickSale()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-md text-sm font-medium"><i class="fa-solid fa-cart-shopping"></i> Quick Sell</button>
+                    <button onclick="openProductModal()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg shadow-md text-sm font-medium"><i class="fa-solid fa-plus"></i> Add Product</button>
+                </div>
             </div>
             <div id="productsGrid" class="space-y-8"></div>
         </div>
 
         <div id="view-members" class="hidden fade-in">
             <div class="flex justify-between items-center mb-6">
-                <div><h2 class="text-xl font-bold text-slate-800">Members Directory</h2></div>
+                <h2 class="text-xl font-bold text-slate-800">Members Directory</h2>
                 <button onclick="openMemberModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md text-sm font-medium"><i class="fa-solid fa-user-plus"></i> Add Member</button>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <table class="w-full text-left text-sm text-slate-600">
                     <thead class="bg-slate-50 text-slate-800 font-semibold border-b border-slate-200">
-                        <tr>
-                            <th class="px-6 py-4">Name</th>
-                            <th class="px-6 py-4">Phone</th>
-                            <th class="px-6 py-4">Total Spend</th>
-                            <th class="px-6 py-4 text-right">Actions</th>
-                        </tr>
+                        <tr><th class="px-6 py-4">Name</th><th class="px-6 py-4">Phone</th><th class="px-6 py-4">Total Spend</th><th class="px-6 py-4 text-right">Actions</th></tr>
                     </thead>
                     <tbody id="membersList" class="divide-y divide-slate-100"></tbody>
                 </table>
             </div>
         </div>
+
+        <div id="view-transactions" class="hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-slate-800">Transaction History</h2>
+                <div class="text-sm bg-white border px-3 py-1 rounded-lg">Total Records: <span id="txn-count" class="font-bold">0</span></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto"> 
+                    <table class="min-w-full text-left text-sm text-slate-600"> 
+                        <thead class="bg-slate-50 text-slate-800 font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4">Date & Time</th>
+                                <th class="px-6 py-4">Type</th>
+                                <th class="px-6 py-4">Summary</th>
+                                <th class="px-6 py-4">Member/Guest</th>
+                                <th class="px-6 py-4">Amount</th>
+                                <th class="px-6 py-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsList" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <div id="reservationModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">Reserve Table</h3>
-                <button onclick="closeReservationModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    <div id="addTableModal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold mb-4">Add New Table</h3>
+            <form onsubmit="saveTable(event)" class="space-y-4">
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Table Name</label><input type="text" id="tableName" class="w-full p-2 border rounded-lg" required placeholder="e.g. Pool Table 5"></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label><select id="tableType" class="w-full p-2 border rounded-lg"><option>Snooker</option><option>Pool</option><option>Billiards</option></select></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Hourly Rate (₹)</label><input type="number" id="tableRate" class="w-full p-2 border rounded-lg" required value="300"></div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeAddTableModal()" class="flex-1 py-2 rounded-lg border hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="flex-1 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="tableModal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex overflow-hidden">
+            <div class="w-2/3 bg-slate-50 p-6 overflow-y-auto border-r border-slate-200">
+                <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">Add Items to Table</h3><button onclick="closeTableModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+                <div id="modalProductList" class="grid grid-cols-3 gap-3"></div>
             </div>
+            <div class="w-1/3 bg-white p-6 flex flex-col">
+                <h3 class="text-lg font-bold mb-1" id="modalTableName">Table Name</h3>
+                <div class="text-3xl font-mono font-bold text-teal-600 mb-4" id="modalTableTimer">00:00:00</div>
+                <div class="flex-1 overflow-y-auto mb-4"><ul id="modalOrderList" class="space-y-2 text-sm"></ul></div>
+                <div class="border-t pt-4 mt-auto">
+                    <div class="flex justify-between items-end mb-4"><span class="text-sm font-bold text-slate-500">Total Bill</span><span class="text-2xl font-bold text-slate-900" id="modalGrandTotal">₹0</span></div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Assign to Member</label>
+                    <select id="checkoutMemberSelect" class="w-full p-2 border rounded-lg mb-4 text-sm"></select>
+                    <button onclick="confirmEndSession()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-red-500/30">End Session & Pay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="quickSaleModal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex overflow-hidden">
+            <div class="w-2/3 bg-slate-50 p-6 overflow-y-auto border-r border-slate-200">
+                <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">Quick Sell Products</h3><button onclick="closeQuickSale()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+                <div id="quickProductList" class="grid grid-cols-3 gap-3"></div>
+            </div>
+            <div class="w-1/3 bg-white p-6 flex flex-col">
+                <div class="flex items-center gap-2 mb-4 text-indigo-600"><i class="fa-solid fa-cart-shopping"></i> <h3 class="text-lg font-bold">Current Cart</h3></div>
+                
+                <div class="flex-1 overflow-y-auto mb-4 bg-slate-50 rounded-lg p-2"><ul id="quickCartList" class="space-y-2 text-sm"></ul></div>
+                
+                <div class="border-t pt-4 mt-auto">
+                    <div class="flex justify-between items-end mb-4"><span class="text-sm font-bold text-slate-500">Total Pay</span><span class="text-2xl font-bold text-slate-900" id="quickGrandTotal">₹0</span></div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Assign to Member (Optional)</label>
+                    <select id="quickMemberSelect" class="w-full p-2 border rounded-lg mb-4 text-sm"></select>
+                    <button onclick="submitQuickSale()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg shadow-indigo-500/30">Complete Sale</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="transactionDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-[85] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-800">Transaction Details</h3>
+                <button onclick="closeTransactionModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div id="txnModalContent" class="space-y-4">
+                    </div>
+            </div>
+            <div class="p-4 border-t border-slate-200 bg-slate-50 text-right">
+                <button onclick="closeTransactionModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-lg text-sm font-medium">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold mb-4">Add Product</h3>
+            <form onsubmit="saveProduct(event)" class="space-y-4">
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Name</label><input type="text" id="prodName" class="w-full p-2 border rounded-lg" required></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Category</label><input type="text" id="prodCat" class="w-full p-2 border rounded-lg" placeholder="e.g. Beverages" required></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Price</label><input type="number" id="prodPrice" class="w-full p-2 border rounded-lg" required></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Icon (Emoji)</label><input type="text" id="prodIcon" class="w-full p-2 border rounded-lg" value="🥤"></div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeProductModal()" class="flex-1 py-2 rounded-lg border hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="flex-1 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="memberModal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold mb-4">New Member</h3>
+            <form onsubmit="saveMember(event)" class="space-y-4">
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Full Name</label><input type="text" id="memName" class="w-full p-2 border rounded-lg" required></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone Number</label><input type="tel" id="memPhone" class="w-full p-2 border rounded-lg" required></div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeMemberModal()" class="flex-1 py-2 rounded-lg border hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="flex-1 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Add Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="reservationModal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold mb-4">Reserve Table</h3>
             <form onsubmit="saveReservation(event)" class="space-y-4">
                 <input type="hidden" id="resTableId">
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">Customer Name</label>
-                    <input type="text" id="resName" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Customer Name</label><input type="text" id="resName" class="w-full p-2 border rounded-lg" required></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Time</label><input type="time" id="resTime" class="w-full p-2 border rounded-lg" required></div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeReservationModal()" class="flex-1 py-2 rounded-lg border hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="flex-1 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700">Confirm Reservation</button>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">Reservation Time</label>
-                    <input type="time" id="resTime" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
-                </div>
-                <button type="submit" class="w-full bg-purple-600 text-white py-2.5 rounded-lg font-medium hover:bg-purple-700">Confirm Reservation</button>
             </form>
         </div>
     </div>
 
-    <div id="memberModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">New Member</h3>
-                <button onclick="closeMemberModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form onsubmit="saveMember(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">Full Name</label>
-                    <input type="text" id="memName" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">Phone Number</label>
-                    <input type="tel" id="memPhone" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
-                </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700">Add Member</button>
-            </form>
-        </div>
-    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">Add Product</h3>
-                <button onclick="closeProductModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form onsubmit="saveProduct(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">Product Name</label>
-                    <input type="text" id="prodName" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Category</label>
-                        <select id="prodCat" class="w-full border border-slate-300 rounded-lg px-3 py-2">
-                            <option value="Beverages">Beverages</option>
-                            <option value="Snacks">Snacks</option>
-                            <option value="Food">Food</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Price (₹)</label>
-                        <input type="number" id="prodPrice" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">Icon (Emoji)</label>
-                    <input type="text" id="prodIcon" placeholder="e.g. ☕" class="w-full border border-slate-300 rounded-lg px-3 py-2">
-                </div>
-                <button type="submit" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700">Save Product</button>
-            </form>
-        </div>
-    </div>
+        // CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkANjCfEkI8OrzLhF84pljz82rCVZ_aek",
+            authDomain: "cue-zone.firebaseapp.com",
+            databaseURL: "https://cue-zone-default-rtdb.firebaseio.com",
+            projectId: "cue-zone",
+            storageBucket: "cue-zone.firebasestorage.app",
+            messagingSenderId: "440447135356",
+            appId: "1:440447135356:web:fd3441d5765ea65a0a63f9",
+            measurementId: "G-7FNBDHWD59"
+        };
 
-    <div id="tableModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-0 overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <div>
-                    <h3 class="text-lg font-bold" id="modalTableName">Table 1</h3>
-                    <p class="text-xs text-slate-500" id="modalTableTimer">00:00:00</p>
-                </div>
-                <button onclick="closeTableModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            <div class="p-5 overflow-y-auto flex-1">
-                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Add Items</h4>
-                <div class="grid grid-cols-3 gap-3 mb-6" id="modalProductList"></div>
-                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Current Order</h4>
-                <ul id="modalOrderList" class="space-y-2 mb-4 text-sm"></ul>
-            </div>
-            <div class="p-5 border-t border-slate-100 bg-slate-50">
-                <div class="mb-4">
-                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Bill to Member (Optional)</label>
-                     <select id="checkoutMemberSelect" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
-                         <option value="">-- Guest (Cash) --</option>
-                         </select>
-                </div>
-                <div class="flex justify-between items-center mb-4 pt-2 border-t border-slate-200">
-                    <span class="text-lg font-bold text-slate-800">Grand Total</span>
-                    <span class="text-2xl font-bold text-teal-600" id="modalGrandTotal">₹0</span>
-                </div>
-                <button onclick="confirmEndSession()" class="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 shadow-lg shadow-red-500/30">
-                    Stop Session & Collect
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="addTableModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">Add New Table</h3>
-                <button onclick="closeAddTableModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            <form onsubmit="saveTable(event)" class="space-y-4">
-                <input type="text" id="tableName" placeholder="Table Name" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
-                <div class="grid grid-cols-2 gap-4">
-                    <select id="tableType" class="w-full border border-slate-300 rounded-lg px-3 py-2">
-                        <option value="Snooker">Snooker</option>
-                        <option value="Pool">Pool</option>
-                    </select>
-                    <input type="number" id="tableRate" value="300" placeholder="Rate/Hr" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
-                </div>
-                <button type="submit" class="w-full bg-slate-800 text-white py-2.5 rounded-lg font-medium hover:bg-slate-900">Create Table</button>
-            </form>
-        </div>
-    </div>
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-    <script>
-        // --- 1. POPUP & TOAST SYSTEM ---
+        // STATE
+        const defaultTables = [ { id: 1, name: 'Snooker Table 1', type: 'Snooker', rate: 300, status: 'available', startTime: null, orders: [], reservation: null } ];
+        const defaultProducts = [ { id: 1, name: 'Chai', category: 'Beverages', price: 20, icon: '☕' } ];
+        let appData = { tables: [], products: [], members: [], transactions: [], totalRevenue: 0 };
+        let activeModalTableId = null;
+        let quickSaleCart = [];
+
+        // HELPERS
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             const colors = type === 'success' ? 'bg-teal-500 text-white' : 'bg-red-500 text-white';
             const icon = type === 'success' ? '<i class="fa-solid fa-check-circle"></i>' : '<i class="fa-solid fa-circle-exclamation"></i>';
-            
             toast.className = `${colors} px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[250px] toast-enter pointer-events-auto`;
             toast.innerHTML = `${icon} <span class="font-medium text-sm">${message}</span>`;
-            
             container.appendChild(toast);
-            
-            // Animation Trigger
             requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); });
-            
-            // Auto Remove
-            setTimeout(() => {
-                toast.classList.remove('toast-enter-active');
-                toast.classList.add('toast-exit-active');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            setTimeout(() => { toast.classList.remove('toast-enter-active'); toast.classList.add('toast-exit-active'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
         let confirmCallback = null;
@@ -310,98 +329,224 @@
             confirmCallback = callback;
             document.getElementById('confirmModal').classList.remove('hidden');
         }
+        function closeConfirmModal() { document.getElementById('confirmModal').classList.add('hidden'); confirmCallback = null; }
+        
+        const confirmBtn = document.getElementById('confirmBtnAction');
+        if(confirmBtn) confirmBtn.addEventListener('click', () => { if(confirmCallback) confirmCallback(); closeConfirmModal(); });
 
-        function closeConfirmModal() {
-            document.getElementById('confirmModal').classList.add('hidden');
-            confirmCallback = null;
-        }
-
-        document.getElementById('confirmBtnAction').addEventListener('click', () => {
-            if(confirmCallback) confirmCallback();
-            closeConfirmModal();
+        // FIREBASE LISTENERS
+        onValue(ref(db, 'tables'), snap => {
+            const val = snap.val();
+            appData.tables = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+            if(!appData.tables.length) appData.tables = defaultTables;
+            appData.tables = appData.tables.map(t => ({ ...t, orders: Array.isArray(t.orders) ? t.orders : [], reservation: t.reservation || null }));
+            renderDashboard(); renderTables(); renderActiveOrders();
         });
 
-        // --- 2. DATA & STATE ---
-        const defaultTables = [
-            { id: 1, name: 'Snooker Table 1', type: 'Snooker', rate: 300, status: 'available', startTime: null, orders: [], reservation: null }
-        ];
-        const defaultProducts = [
-            { id: 1, name: 'Chai', category: 'Beverages', price: 20, icon: '☕' }
-        ];
+        onValue(ref(db, 'products'), snap => {
+            const val = snap.val();
+            appData.products = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+            if(!appData.products.length) appData.products = defaultProducts;
+            renderProducts();
+        });
 
-        let appData = { tables: [], products: [], members: [], totalRevenue: 0 };
-        let activeModalTableId = null;
+        onValue(ref(db, 'members'), snap => {
+            const val = snap.val();
+            appData.members = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+            renderMembers(); renderDashboard();
+        });
 
-        function init() {
-            try {
-                // Load & Repair Data
-                const rawTables = localStorage.getItem('cz_tables');
-                const rawProducts = localStorage.getItem('cz_products');
-                const rawMembers = localStorage.getItem('cz_members');
-                const rawRevenue = localStorage.getItem('cz_revenue');
-
-                appData.tables = rawTables ? JSON.parse(rawTables) : defaultTables;
-                appData.products = rawProducts ? JSON.parse(rawProducts) : defaultProducts;
-                appData.members = rawMembers ? JSON.parse(rawMembers) : [];
-                appData.totalRevenue = rawRevenue ? parseFloat(rawRevenue) : 0;
-
-                // Self-repair legacy data
-                appData.tables = appData.tables.map(t => ({
-                    ...t,
-                    orders: Array.isArray(t.orders) ? t.orders : [],
-                    reservation: t.reservation || null // Ensure reservation field exists
-                }));
-
-                renderDashboard();
-                renderTables();
-                renderProducts();
-                renderMembers();
-                
-                setInterval(updateTimers, 1000);
-            } catch (e) {
-                console.error(e);
-                showToast("Data Corruption Detected. Please Reset.", "error");
-            }
-        }
-
-        function saveData() {
-            localStorage.setItem('cz_tables', JSON.stringify(appData.tables));
-            localStorage.setItem('cz_products', JSON.stringify(appData.products));
-            localStorage.setItem('cz_members', JSON.stringify(appData.members));
-            localStorage.setItem('cz_revenue', appData.totalRevenue);
+        onValue(ref(db, 'revenue'), snap => {
+            const val = snap.val();
+            appData.totalRevenue = val ? parseFloat(val) : 0;
             renderDashboard();
+        });
+
+        onValue(ref(db, 'transactions'), snap => {
+            const val = snap.val();
+            appData.transactions = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+            renderTransactions();
+        });
+
+        // WRITE
+        function saveData() {
+            set(ref(db, 'tables'), appData.tables).catch(e => console.error(e));
+            set(ref(db, 'products'), appData.products).catch(e => console.error(e));
+            set(ref(db, 'members'), appData.members).catch(e => console.error(e));
+            set(ref(db, 'revenue'), appData.totalRevenue).catch(e => console.error(e));
+            set(ref(db, 'transactions'), appData.transactions).catch(e => console.error(e));
         }
 
         function triggerHardReset() {
-            showConfirm("Reset System?", "This will permanently erase all data. Irreversible!", () => {
-                localStorage.clear();
-                location.reload();
+            showConfirm("Reset System?", "This will erase all data!", () => {
+                remove(ref(db, 'tables')); remove(ref(db, 'products')); remove(ref(db, 'members')); remove(ref(db, 'revenue')); remove(ref(db, 'transactions'));
+                set(ref(db, 'tables'), defaultTables); set(ref(db, 'products'), defaultProducts); set(ref(db, 'members'), []); set(ref(db, 'revenue'), 0); set(ref(db, 'transactions'), []);
+                showToast('System Reset');
             });
         }
 
-        // --- 3. NAVIGATION ---
+        // Updated logTransaction to store detailed data objects
+        function logTransaction(type, amount, summary, memberId, detailedItems = [], meta = {}) {
+            let memberName = 'Guest';
+            if(memberId) {
+                const mem = appData.members.find(m => m.id == memberId);
+                if(mem) memberName = mem.name;
+            }
+            const txn = {
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                type: type,
+                summary: summary,
+                amount: amount,
+                member: memberName,
+                items: detailedItems, // Stores array of {name, qty, price}
+                meta: meta // Stores {tableName, duration, tableCost}
+            };
+            appData.transactions.push(txn);
+        }
+
+        // UI LOGIC
         function switchTab(tabName) {
-            ['tables', 'orders', 'products', 'members'].forEach(t => {
-                document.getElementById(`view-${t}`).classList.add('hidden');
-                document.getElementById(`btn-${t}`).className = "flex-1 py-2 px-4 rounded-lg tab-inactive whitespace-nowrap transition-all";
+            ['tables', 'orders', 'products', 'members', 'transactions'].forEach(t => {
+                const el = document.getElementById(`view-${t}`);
+                if(el) el.classList.add('hidden');
+                const btn = document.getElementById(`btn-${t}`);
+                if(btn) btn.className = "flex-1 py-2 px-4 rounded-lg tab-inactive whitespace-nowrap transition-all";
             });
             document.getElementById(`view-${tabName}`).classList.remove('hidden');
             document.getElementById(`btn-${tabName}`).className = "flex-1 py-2 px-4 rounded-lg tab-active whitespace-nowrap transition-all";
             if(tabName === 'orders') renderActiveOrders();
+            if(tabName === 'transactions') renderTransactions();
         }
 
         function renderDashboard() {
-            document.getElementById('statActiveTables').innerText = appData.tables.filter(t => t.status === 'active').length;
-            document.getElementById('statAvailableTables').innerText = appData.tables.filter(t => t.status === 'available').length;
-            document.getElementById('statTotalMembers').innerText = appData.members.length;
-            document.getElementById('statRevenue').innerText = appData.totalRevenue.toLocaleString('en-IN');
+            if(document.getElementById('statActiveTables')) document.getElementById('statActiveTables').innerText = appData.tables.filter(t => t.status === 'active').length;
+            if(document.getElementById('statAvailableTables')) document.getElementById('statAvailableTables').innerText = appData.tables.filter(t => t.status === 'available').length;
+            if(document.getElementById('statTotalMembers')) document.getElementById('statTotalMembers').innerText = appData.members.length;
+            if(document.getElementById('statRevenue')) document.getElementById('statRevenue').innerText = appData.totalRevenue.toLocaleString('en-IN');
         }
 
-        // --- 4. TABLE MANAGEMENT ---
+        // Updated Render Transactions with View Button
+        function renderTransactions() {
+            const list = document.getElementById('transactionsList');
+            const count = document.getElementById('txn-count');
+            if(!list) return;
+            
+            const sortedTxns = [...appData.transactions].sort((a,b) => b.id - a.id);
+            if(count) count.innerText = sortedTxns.length;
+
+            list.innerHTML = sortedTxns.length ? '' : '<tr><td colspan="6" class="px-6 py-4 text-center text-slate-400">No transactions recorded yet.</td></tr>';
+            
+            sortedTxns.forEach(t => {
+                let badgeColor = t.type === 'Table Session' ? 'bg-teal-100 text-teal-800' : 'bg-indigo-100 text-indigo-800';
+                list.innerHTML += `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">${t.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${t.type}</span></td>
+                    <td class="px-6 py-4 text-xs font-medium text-slate-700 max-w-[200px] truncate">${t.summary}</td>
+                    <td class="px-6 py-4 text-sm whitespace-nowrap">${t.member}</td>
+                    <td class="px-6 py-4 font-bold text-slate-800 whitespace-nowrap">₹${t.amount.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                        <button onclick="openTransactionModal(${t.id})" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md border border-slate-300 font-medium transition-colors">View</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        // NEW: Open Detailed Transaction Modal
+        function openTransactionModal(txnId) {
+            const txn = appData.transactions.find(t => t.id === txnId);
+            if(!txn) return;
+
+            const content = document.getElementById('txnModalContent');
+            const items = txn.items || [];
+            const meta = txn.meta || {};
+
+            let html = `
+                <div class="flex justify-between border-b pb-4 mb-4">
+                    <div>
+                        <p class="text-sm text-slate-500">Transaction ID</p>
+                        <p class="font-mono text-xs text-slate-400">#${txn.id}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-slate-500">Date</p>
+                        <p class="text-sm font-medium">${txn.date}</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-slate-50 p-3 rounded">
+                        <p class="text-xs text-slate-500 uppercase font-bold">Type</p>
+                        <p class="text-sm font-medium text-slate-800">${txn.type}</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded">
+                        <p class="text-xs text-slate-500 uppercase font-bold">Member</p>
+                        <p class="text-sm font-medium text-slate-800">${txn.member}</p>
+                    </div>
+                </div>
+            `;
+
+            // If it's a table session, show table details
+            if(txn.type === 'Table Session' && meta.tableName) {
+                html += `
+                <div class="mb-4 border border-teal-100 bg-teal-50 rounded-lg p-3">
+                    <h4 class="text-sm font-bold text-teal-800 mb-2 border-b border-teal-200 pb-1">Table Details</h4>
+                    <div class="flex justify-between text-sm mb-1"><span>Table</span> <span class="font-medium">${meta.tableName}</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span>Duration</span> <span class="font-medium">${meta.duration}</span></div>
+                    <div class="flex justify-between text-sm"><span>Table Cost</span> <span class="font-bold">₹${meta.tableCost}</span></div>
+                </div>
+                `;
+            }
+
+            // Itemized List
+            if(items.length > 0) {
+                html += `<h4 class="text-sm font-bold text-slate-700 mb-2">Items Purchased</h4>
+                <div class="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden mb-4">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-100 text-slate-500 text-xs">
+                            <tr><th class="p-2 text-left">Item</th><th class="p-2 text-center">Qty</th><th class="p-2 text-right">Total</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">`;
+                
+                let itemsTotal = 0;
+                items.forEach(i => {
+                    const lineTotal = i.price * i.qty;
+                    itemsTotal += lineTotal;
+                    html += `<tr>
+                        <td class="p-2 text-slate-700">${i.name}</td>
+                        <td class="p-2 text-center text-slate-500">x${i.qty}</td>
+                        <td class="p-2 text-right text-slate-700">₹${lineTotal}</td>
+                    </tr>`;
+                });
+                
+                html += `</tbody>
+                        <tfoot class="bg-slate-50 font-medium">
+                            <tr><td colspan="2" class="p-2 text-right text-slate-500">Items Total:</td><td class="p-2 text-right">₹${itemsTotal}</td></tr>
+                        </tfoot>
+                    </table>
+                </div>`;
+            } else {
+                html += `<p class="text-sm text-slate-400 italic mb-4">No additional items purchased.</p>`;
+            }
+
+            // Grand Total
+            html += `
+                <div class="border-t-2 border-slate-200 pt-4 flex justify-between items-center">
+                    <span class="text-lg font-bold text-slate-700">Grand Total</span>
+                    <span class="text-2xl font-bold text-emerald-600">₹${txn.amount}</span>
+                </div>
+            `;
+
+            content.innerHTML = html;
+            document.getElementById('transactionDetailsModal').classList.remove('hidden');
+        }
+
+        function closeTransactionModal() { document.getElementById('transactionDetailsModal').classList.add('hidden'); }
+
         function renderTables() {
             const container = document.getElementById('tablesGrid');
+            if(!container) return;
             container.innerHTML = '';
-
             appData.tables.forEach(table => {
                 let statusColor, statusText, btnAction;
                 let reservedInfo = '';
@@ -414,18 +559,13 @@
                     btnAction = `<button onclick="openTableModal(${table.id})" class="w-full mt-4 bg-slate-800 hover:bg-slate-900 text-white font-medium py-2.5 rounded-lg flex justify-center items-center gap-2 shadow-lg shadow-slate-500/20"><i class="fa-solid fa-list-check"></i> Manage Order</button>`;
                 } else if (table.status === 'reserved') {
                     statusColor = 'text-purple-600 bg-purple-50'; statusText = 'Reserved';
-                    if(table.reservation) {
-                        reservedInfo = `<div class="mt-2 text-xs bg-purple-100 text-purple-700 p-2 rounded text-center">
-                            <span class="font-bold">${table.reservation.name}</span> @ ${table.reservation.time}
-                        </div>`;
-                    }
+                    if(table.reservation) reservedInfo = `<div class="mt-2 text-xs bg-purple-100 text-purple-700 p-2 rounded text-center"><span class="font-bold">${table.reservation.name}</span> @ ${table.reservation.time}</div>`;
                     btnAction = `<button onclick="setTableStatus(${table.id}, 'available')" class="w-full mt-4 bg-slate-100 text-slate-500 font-medium py-2.5 rounded-lg hover:bg-slate-200">Cancel Reservation</button>`;
                 } else {
                     statusColor = 'text-red-600 bg-red-50'; statusText = 'Maintenance';
                     btnAction = `<button onclick="setTableStatus(${table.id}, 'available')" class="w-full mt-4 bg-slate-100 text-slate-500 font-medium py-2.5 rounded-lg hover:bg-slate-200">Finish Maintenance</button>`;
                 }
 
-                // Dropdown Logic
                 let dropdownHtml = '';
                 if(table.status !== 'active') {
                     dropdownHtml = `
@@ -437,193 +577,134 @@
                         <button onclick="deleteTable(${table.id})" class="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50">Delete Table</button>
                     </div>`;
                 }
-
-                const timerDisplay = (table.status === 'active' && table.startTime) 
-                    ? `<div class="mt-4 text-center py-2 bg-slate-50 rounded border border-slate-100"><div class="text-2xl font-mono font-bold text-slate-800" id="timer-${table.id}">00:00:00</div><div class="text-xs text-slate-500">Bill: ₹<span id="cost-${table.id}">0</span></div></div>` 
-                    : '';
-
+                const timerDisplay = (table.status === 'active' && table.startTime) ? `<div class="mt-4 text-center py-2 bg-slate-50 rounded border border-slate-100"><div class="text-2xl font-mono font-bold text-slate-800" id="timer-${table.id}">00:00:00</div><div class="text-xs text-slate-500">Bill: ₹<span id="cost-${table.id}">0</span></div></div>` : '';
+                
                 container.innerHTML += `
                 <div class="card-container relative bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h3 class="font-bold text-lg text-slate-800">${table.name}</h3>
-                            <p class="text-sm text-slate-500">${table.type} • ₹${table.rate}/Hr</p>
-                        </div>
-                        <div class="relative">
-                            <button onclick="toggleDropdown(event, ${table.id})" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-ellipsis-vertical px-2"></i></button>
-                            ${dropdownHtml}
-                        </div>
+                        <div><h3 class="font-bold text-lg text-slate-800">${table.name}</h3><p class="text-sm text-slate-500">${table.type} • ₹${table.rate}/Hr</p></div>
+                        <div class="relative"><button onclick="toggleDropdown(event, ${table.id})" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-ellipsis-vertical px-2"></i></button>${dropdownHtml}</div>
                     </div>
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${statusColor}"><i class="fa-solid fa-circle text-[8px]"></i> ${statusText}</span>
-                    ${reservedInfo}
-                    ${timerDisplay}
-                    ${btnAction}
+                    ${reservedInfo} ${timerDisplay} ${btnAction}
                 </div>`;
             });
         }
 
-        function toggleDropdown(e, id) {
-            e.stopPropagation();
-            closeAllDropdowns();
-            const el = document.getElementById(`dropdown-${id}`);
-            if(el) el.classList.remove('hidden');
-        }
+        function toggleDropdown(e, id) { e.stopPropagation(); closeAllDropdowns(); const el = document.getElementById(`dropdown-${id}`); if(el) el.classList.remove('hidden'); }
         function closeAllDropdowns() { document.querySelectorAll('[id^="dropdown-"]').forEach(el => el.classList.add('hidden')); }
-
-        // --- 5. RESERVATION LOGIC ---
-        function openReservationModal(id) {
-            closeAllDropdowns();
-            document.getElementById('resTableId').value = id;
-            document.getElementById('reservationModal').classList.remove('hidden');
-        }
+        function openReservationModal(id) { closeAllDropdowns(); document.getElementById('resTableId').value = id; document.getElementById('reservationModal').classList.remove('hidden'); }
         function closeReservationModal() { document.getElementById('reservationModal').classList.add('hidden'); }
-        
-        function saveReservation(e) {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('resTableId').value);
-            const name = document.getElementById('resName').value;
-            const time = document.getElementById('resTime').value;
+        function saveReservation(e) { e.preventDefault(); const id = parseInt(document.getElementById('resTableId').value); const name = document.getElementById('resName').value; const time = document.getElementById('resTime').value; const table = appData.tables.find(t => t.id === id); if(!table) return showToast('Error','error'); table.status = 'reserved'; table.reservation = { name, time }; saveData(); renderTables(); closeReservationModal(); showToast('Reserved'); e.target.reset(); }
 
-            const table = appData.tables.find(t => t.id === id);
-            table.status = 'reserved';
-            table.reservation = { name, time };
-            
-            saveData();
-            renderTables();
-            closeReservationModal();
-            showToast(`Table reserved for ${name} at ${time}`);
-            e.target.reset();
-        }
-
-        // --- 6. MEMBER LOGIC ---
-        function renderMembers() {
-            const list = document.getElementById('membersList');
-            list.innerHTML = '';
-            appData.members.forEach(m => {
-                list.innerHTML += `
-                <tr class="hover:bg-slate-50">
-                    <td class="px-6 py-4 font-medium text-slate-800">${m.name}</td>
-                    <td class="px-6 py-4">${m.phone}</td>
-                    <td class="px-6 py-4 text-emerald-600 font-bold">₹${m.totalSpend.toLocaleString()}</td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="deleteMember(${m.id})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>`;
-            });
-        }
+        // MEMBERS
+        function renderMembers() { const list = document.getElementById('membersList'); if(!list) return; list.innerHTML = ''; appData.members.forEach(m => { list.innerHTML += `<tr class="hover:bg-slate-50"><td class="px-6 py-4 font-medium text-slate-800">${m.name}</td><td class="px-6 py-4">${m.phone}</td><td class="px-6 py-4 text-emerald-600 font-bold">₹${(m.totalSpend||0).toLocaleString()}</td><td class="px-6 py-4 text-right"><button onclick="deleteMember(${m.id})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button></td></tr>`; }); }
         function openMemberModal() { document.getElementById('memberModal').classList.remove('hidden'); }
         function closeMemberModal() { document.getElementById('memberModal').classList.add('hidden'); }
+        function saveMember(e) { e.preventDefault(); appData.members.push({ id: Date.now(), name: document.getElementById('memName').value, phone: document.getElementById('memPhone').value, totalSpend: 0 }); saveData(); renderMembers(); closeMemberModal(); showToast("Member Added"); e.target.reset(); }
+        function deleteMember(id) { showConfirm("Delete?", "Action cannot be undone.", () => { appData.members = appData.members.filter(m => m.id !== id); saveData(); renderMembers(); showToast("Member Deleted"); }); }
+
+        // SESSION & QUICK SALE
+        function startSession(id) { const table = appData.tables.find(t => t.id === id); if(!table) return; table.status = 'active'; table.startTime = Date.now(); table.orders = []; table.reservation = null; saveData(); renderTables(); showToast('Started'); }
         
-        function saveMember(e) {
-            e.preventDefault();
-            const name = document.getElementById('memName').value;
-            const phone = document.getElementById('memPhone').value;
-            appData.members.push({ id: Date.now(), name, phone, totalSpend: 0 });
-            saveData();
-            renderMembers();
-            closeMemberModal();
-            showToast("Member Added Successfully");
-            e.target.reset();
+        // Table Order Logic
+        function openTableModal(id) { activeModalTableId = id; const table = appData.tables.find(t => t.id === id); if(!table) return; document.getElementById('modalTableName').innerText = table.name; document.getElementById('tableModal').classList.remove('hidden'); const pList = document.getElementById('modalProductList'); pList.innerHTML = ''; appData.products.forEach(p => { pList.innerHTML += `<button onclick="addItem(${p.id})" class="flex flex-col items-center p-2 border border-slate-200 rounded hover:bg-teal-50"><span class="text-xl">${p.icon}</span><span class="text-[10px] font-bold">${p.name}</span><span class="text-[10px]">₹${p.price}</span></button>`; }); const mSelect = document.getElementById('checkoutMemberSelect'); mSelect.innerHTML = '<option value="">-- Guest (Cash) --</option>'; appData.members.forEach(m => { mSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`; }); renderOrderList(); }
+        function addItem(pid) { const table = appData.tables.find(t => t.id === activeModalTableId); const product = appData.products.find(p => p.id === pid); if(!table || !product) return; const existing = table.orders.find(o => o.id === pid); if(existing) existing.qty++; else table.orders.push({...product, qty: 1}); saveData(); renderOrderList(); }
+        function renderOrderList() { if(!activeModalTableId) return; const table = appData.tables.find(t => t.id === activeModalTableId); const list = document.getElementById('modalOrderList'); list.innerHTML = table.orders.length ? '' : '<li class="text-slate-400 italic text-center">No items.</li>'; table.orders.forEach(item => { list.innerHTML += `<li class="flex justify-between bg-slate-50 p-2 rounded"><span class="text-xs font-bold w-6 bg-white border text-center rounded">${item.qty}</span> <span>${item.name}</span> <span>₹${item.price*item.qty}</span></li>`; }); updateTimers(); }
+        
+        // Quick Sale Logic
+        function openQuickSale() {
+            quickSaleCart = [];
+            document.getElementById('quickSaleModal').classList.remove('hidden');
+            const pList = document.getElementById('quickProductList'); 
+            pList.innerHTML = ''; 
+            appData.products.forEach(p => { 
+                pList.innerHTML += `<button onclick="addToQuickCart(${p.id})" class="flex flex-col items-center p-2 border border-slate-200 rounded hover:bg-indigo-50"><span class="text-xl">${p.icon}</span><span class="text-[10px] font-bold">${p.name}</span><span class="text-[10px]">₹${p.price}</span></button>`; 
+            }); 
+            const mSelect = document.getElementById('quickMemberSelect'); 
+            mSelect.innerHTML = '<option value="">-- Guest (Cash) --</option>'; 
+            appData.members.forEach(m => { mSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`; }); 
+            renderQuickCart();
         }
-        function deleteMember(id) {
-            showConfirm("Delete Member?", "This cannot be undone.", () => {
-                appData.members = appData.members.filter(m => m.id !== id);
-                saveData();
-                renderMembers();
-                showToast("Member Deleted");
+        function closeQuickSale() { document.getElementById('quickSaleModal').classList.add('hidden'); }
+        function addToQuickCart(pid) { const product = appData.products.find(p => p.id === pid); if(!product) return; const existing = quickSaleCart.find(o => o.id === pid); if(existing) existing.qty++; else quickSaleCart.push({...product, qty: 1}); renderQuickCart(); }
+        function renderQuickCart() {
+            const list = document.getElementById('quickCartList');
+            const totalEl = document.getElementById('quickGrandTotal');
+            list.innerHTML = quickSaleCart.length ? '' : '<li class="text-slate-400 italic text-center p-4">Cart is empty</li>';
+            let total = 0;
+            quickSaleCart.forEach(item => {
+                total += (item.price * item.qty);
+                list.innerHTML += `<li class="flex justify-between bg-white p-2 rounded border border-slate-200"><span class="text-xs font-bold w-6 bg-slate-100 border text-center rounded pt-1">${item.qty}</span> <span>${item.name}</span> <span class="font-bold">₹${item.price*item.qty}</span></li>`;
             });
+            totalEl.innerText = `₹${total}`;
         }
-
-        // --- 7. SESSION & CHECKOUT LOGIC ---
-        function startSession(id) {
-            const table = appData.tables.find(t => t.id === id);
-            table.status = 'active';
-            table.startTime = Date.now();
-            table.orders = [];
-            table.reservation = null; // Clear reservation if starting
-            saveData();
-            renderTables();
-            showToast("Session Started");
-        }
-
-        function openTableModal(id) {
-            activeModalTableId = id;
-            const table = appData.tables.find(t => t.id === id);
-            document.getElementById('modalTableName').innerText = table.name;
-            document.getElementById('tableModal').classList.remove('hidden');
+        function submitQuickSale() {
+            if(quickSaleCart.length === 0) return showToast("Cart is empty", "error");
+            const total = quickSaleCart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            const memberId = document.getElementById('quickMemberSelect').value;
             
-            // Render Products
-            const pList = document.getElementById('modalProductList');
-            pList.innerHTML = '';
-            appData.products.forEach(p => {
-                pList.innerHTML += `<button onclick="addItem(${p.id})" class="flex flex-col items-center p-2 border border-slate-200 rounded hover:bg-teal-50"><span class="text-xl">${p.icon}</span><span class="text-[10px] font-bold">${p.name}</span><span class="text-[10px]">₹${p.price}</span></button>`;
-            });
-
-            // Render Member Dropdown
-            const mSelect = document.getElementById('checkoutMemberSelect');
-            mSelect.innerHTML = '<option value="">-- Guest (Cash) --</option>';
-            appData.members.forEach(m => {
-                mSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`;
-            });
-
-            renderOrderList();
-        }
-
-        function addItem(pid) {
-            const table = appData.tables.find(t => t.id === activeModalTableId);
-            const product = appData.products.find(p => p.id === pid);
-            const existing = table.orders.find(o => o.id === pid);
-            if(existing) existing.qty++; else table.orders.push({...product, qty: 1});
-            saveData();
-            renderOrderList();
-        }
-
-        function renderOrderList() {
-            if(!activeModalTableId) return;
-            const table = appData.tables.find(t => t.id === activeModalTableId);
-            const list = document.getElementById('modalOrderList');
-            list.innerHTML = table.orders.length ? '' : '<li class="text-slate-400 italic text-center">No items.</li>';
-            table.orders.forEach(item => {
-                list.innerHTML += `<li class="flex justify-between bg-slate-50 p-2 rounded"><span class="text-xs font-bold w-6 bg-white border text-center rounded">${item.qty}</span> <span>${item.name}</span> <span>₹${item.price*item.qty}</span></li>`;
-            });
-            updateTimers();
-        }
-
-        function confirmEndSession() {
-            showConfirm("End Session?", "Stop timer and collect payment?", endSessionLogic);
-        }
-
-        function endSessionLogic() {
-            const table = appData.tables.find(t => t.id === activeModalTableId);
-            const diff = Date.now() - table.startTime;
-            const hours = diff / (1000 * 60 * 60);
-            const cost = Math.ceil(hours * table.rate);
-            const itemsCost = table.orders.reduce((s, i) => s + (i.price * i.qty), 0);
-            const total = cost + itemsCost;
-
-            // Handle Member Assignment
-            const memberId = document.getElementById('checkoutMemberSelect').value;
-            if (memberId) {
-                const member = appData.members.find(m => m.id == memberId);
-                if (member) {
-                    member.totalSpend += total;
-                    showToast(`Bill assigned to ${member.name}`);
-                }
-            }
-
-            appData.totalRevenue += total;
-            table.status = 'available'; table.startTime = null; table.orders = [];
+            // Update Member
+            if (memberId) { const member = appData.members.find(m => m.id == memberId); if (member) member.totalSpend = (member.totalSpend||0) + total; }
             
+            // Update Revenue
+            appData.totalRevenue = (appData.totalRevenue || 0) + total;
+            
+            // Log Transaction
+            const summary = quickSaleCart.map(i => `${i.qty} x ${i.name}`).join(', ');
+            // Pass full items array for detailed view
+            logTransaction('Quick Sale', total, summary, memberId, quickSaleCart, {});
+
             saveData();
-            closeTableModal();
-            renderTables();
-            renderMembers(); // Refresh member stats
-            showToast(`Collected ₹${total}`, "success");
+            closeQuickSale();
+            showToast(`Sold for ₹${total}`);
         }
 
+        // End Table Session Logic
+        function confirmEndSession() { showConfirm("End Session?", "Stop timer & Pay?", endSessionLogic); }
+        function endSessionLogic() { 
+            const table = appData.tables.find(t => t.id === activeModalTableId); 
+            if(!table) return; 
+            const diff = Date.now() - table.startTime; 
+            const hours = diff / (1000 * 60 * 60); 
+            const cost = Math.ceil(hours * table.rate); 
+            const itemsCost = table.orders.reduce((s, i) => s + (i.price * i.qty), 0); 
+            const total = cost + itemsCost; 
+            const memberId = document.getElementById('checkoutMemberSelect').value; 
+            
+            // Update Member
+            if (memberId) { const member = appData.members.find(m => m.id == memberId); if (member) member.totalSpend = (member.totalSpend||0) + total; } 
+            
+            // Update Revenue
+            appData.totalRevenue = (appData.totalRevenue || 0) + total; 
+            
+            // Log Transaction with Meta Data
+            const itemSummary = table.orders.length > 0 ? ` + ${table.orders.length} items` : '';
+            const durationMins = Math.floor(diff/60000);
+            const summary = `${table.name} (${durationMins} mins)${itemSummary}`;
+            
+            // Store meta details for receipt
+            const meta = {
+                tableName: table.name,
+                duration: `${Math.floor(hours)}h ${Math.floor((diff%3600000)/60000)}m`,
+                tableCost: cost
+            };
+
+            logTransaction('Table Session', total, summary, memberId, table.orders, meta);
+
+            // Reset Table
+            table.status = 'available'; 
+            table.startTime = null; 
+            table.orders = []; 
+            saveData(); 
+            closeTableModal(); 
+            renderTables(); 
+            renderMembers(); 
+            showToast(`Collected ₹${total}`, "success"); 
+        }
         function closeTableModal() { document.getElementById('tableModal').classList.add('hidden'); activeModalTableId = null; }
-
-        // --- 8. UTILS & TIMERS ---
+        
+        // TIMERS
         function updateTimers() {
             const now = Date.now();
             appData.tables.forEach(table => {
@@ -632,82 +713,81 @@
                     const h = Math.floor(diff/3600000).toString().padStart(2,'0');
                     const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
                     const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
-                    
                     const cost = Math.ceil((diff/3600000) * table.rate);
-                    
-                    const elT = document.getElementById(`timer-${table.id}`);
-                    const elC = document.getElementById(`cost-${table.id}`);
-                    if(elT) elT.innerText = `${h}:${m}:${s}`;
-                    if(elC) elC.innerText = cost;
-
+                    const elT = document.getElementById(`timer-${table.id}`); const elC = document.getElementById(`cost-${table.id}`);
+                    if(elT) elT.innerText = `${h}:${m}:${s}`; if(elC) elC.innerText = cost;
                     if(activeModalTableId === table.id) {
                         const itemsCost = table.orders.reduce((sum, i) => sum + (i.price*i.qty), 0);
-                        document.getElementById('modalTableTimer').innerText = `${h}:${m}:${s}`;
-                        document.getElementById('modalGrandTotal').innerText = `₹${cost + itemsCost}`;
+                        const tmr = document.getElementById('modalTableTimer'); const gt = document.getElementById('modalGrandTotal');
+                        if(tmr) tmr.innerText = `${h}:${m}:${s}`; if(gt) gt.innerText = `₹${cost + itemsCost}`;
                     }
                 }
             });
         }
+        setInterval(updateTimers, 1000);
 
-        // --- 9. HELPERS (Products/Tables) ---
+        // CRUD HELPERS
         function openAddTableModal() { document.getElementById('addTableModal').classList.remove('hidden'); }
         function closeAddTableModal() { document.getElementById('addTableModal').classList.add('hidden'); }
-        function saveTable(e) {
-            e.preventDefault();
-            appData.tables.push({ 
-                id: Date.now(), 
-                name: document.getElementById('tableName').value, 
-                type: document.getElementById('tableType').value, 
-                rate: document.getElementById('tableRate').value, 
-                status: 'available', startTime: null, orders: [], reservation: null 
-            });
-            saveData(); renderTables(); closeAddTableModal(); showToast("Table Created");
-        }
-        function deleteTable(id) {
-            showConfirm("Delete Table?", "Permanent action.", () => {
-                appData.tables = appData.tables.filter(t => t.id !== id);
-                saveData(); renderTables(); showToast("Table Deleted");
-            });
-        }
+        function saveTable(e) { e.preventDefault(); appData.tables.push({ id: Date.now(), name: document.getElementById('tableName').value, type: document.getElementById('tableType').value, rate: Number(document.getElementById('tableRate').value), status: 'available', startTime: null, orders: [], reservation: null }); saveData(); renderTables(); closeAddTableModal(); showToast("Table Created"); }
+        function deleteTable(id) { showConfirm("Delete Table?", "Permanent.", () => { appData.tables = appData.tables.filter(t => t.id !== id); saveData(); renderTables(); showToast("Table Deleted"); }); }
         function openProductModal() { document.getElementById('productModal').classList.remove('hidden'); }
         function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
-        function saveProduct(e) {
-            e.preventDefault();
-            appData.products.push({
-                id: Date.now(),
-                name: document.getElementById('prodName').value,
-                category: document.getElementById('prodCat').value,
-                price: document.getElementById('prodPrice').value,
-                icon: document.getElementById('prodIcon').value
-            });
-            saveData(); renderProducts(); closeProductModal(); showToast("Product Added");
-        }
-        function renderProducts() {
-            const div = document.getElementById('productsGrid'); div.innerHTML = '';
-            const cats = [...new Set(appData.products.map(p => p.category))];
-            cats.forEach(c => {
-                const prods = appData.products.filter(p => p.category === c);
-                div.innerHTML += `<div class="mb-4"><h3 class="font-bold mb-2">${c}</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-4">${prods.map(p => `
-                    <div class="bg-white p-3 rounded shadow border flex justify-between items-center">
-                        <div class="flex gap-2 items-center"><span class="text-xl">${p.icon}</span> <div class="text-sm font-bold">${p.name}</div></div>
-                        <div class="text-orange-500 font-bold">₹${p.price}</div>
-                    </div>`).join('')}</div></div>`;
-            });
-        }
-        function renderActiveOrders() {
-            const c = document.getElementById('activeOrdersContainer');
-            const actives = appData.tables.filter(t => t.status === 'active');
-            if(!actives.length) { c.innerHTML = '<p class="text-slate-400">No active sessions</p>'; return; }
-            c.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">' + actives.map(t => `<div class="bg-white p-4 border rounded shadow-sm"><div class="font-bold flex justify-between"><span>${t.name}</span> <span class="text-teal-600">Active</span></div><button onclick="openTableModal(${t.id})" class="mt-2 text-xs bg-slate-800 text-white px-2 py-1 rounded">View</button></div>`).join('') + '</div>';
-        }
-        function setTableStatus(id, status) {
-            const table = appData.tables.find(t => t.id === id);
-            table.status = status;
-            table.reservation = null;
-            saveData(); renderTables(); showToast(`Status updated to ${status}`);
+        function saveProduct(e) { e.preventDefault(); appData.products.push({ id: Date.now(), name: document.getElementById('prodName').value, category: document.getElementById('prodCat').value, price: Number(document.getElementById('prodPrice').value), icon: document.getElementById('prodIcon').value }); saveData(); renderProducts(); closeProductModal(); showToast("Product Added"); }
+        
+        // Updated Render Products with Delete Button
+        function renderProducts() { 
+            const div = document.getElementById('productsGrid'); if(!div) return; 
+            div.innerHTML = ''; 
+            const cats = [...new Set(appData.products.map(p => p.category))]; 
+            cats.forEach(c => { 
+                const prods = appData.products.filter(p => p.category === c); 
+                div.innerHTML += `
+                <div class="mb-4">
+                    <h3 class="font-bold mb-2">${c}</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        ${prods.map(p => `
+                        <div class="bg-white p-3 rounded shadow border flex justify-between items-center group relative">
+                            <div class="flex gap-2 items-center">
+                                <span class="text-xl">${p.icon}</span> 
+                                <div class="text-sm font-bold">${p.name}</div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="text-orange-500 font-bold">₹${p.price}</div>
+                                <button onclick="deleteProduct(${p.id})" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>`).join('')}
+                    </div>
+                </div>`; 
+            }); 
         }
 
-        init();
+        // New Delete Product Function
+        function deleteProduct(id) {
+            showConfirm("Delete Product?", "This cannot be undone.", () => {
+                appData.products = appData.products.filter(p => p.id !== id);
+                saveData();
+                renderProducts();
+                showToast("Product Deleted");
+            });
+        }
+
+        function renderActiveOrders() { const c = document.getElementById('activeOrdersContainer'); if(!c) return; const actives = appData.tables.filter(t => t.status === 'active'); if(!actives.length) { c.innerHTML = '<p class="text-slate-400">No active sessions</p>'; return; } c.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">' + actives.map(t => `<div class="bg-white p-4 border rounded shadow-sm"><div class="font-bold flex justify-between"><span>${t.name}</span> <span class="text-teal-600">Active</span></div><button onclick="openTableModal(${t.id})" class="mt-2 text-xs bg-slate-800 text-white px-2 py-1 rounded">View</button></div>`).join('') + '</div>'; }
+        function setTableStatus(id, status) { const table = appData.tables.find(t => t.id === id); if(!table) return; table.status = status; table.reservation = null; saveData(); renderTables(); showToast(`Status updated`); }
+
+        // ================= GLOBAL EXPORTS =================
+        window.showToast = showToast; window.triggerHardReset = triggerHardReset; window.closeConfirmModal = closeConfirmModal;
+        window.switchTab = switchTab; window.openAddTableModal = openAddTableModal; window.closeAddTableModal = closeAddTableModal;
+        window.saveTable = saveTable; window.deleteTable = deleteTable; window.openProductModal = openProductModal;
+        window.closeProductModal = closeProductModal; window.saveProduct = saveProduct; window.openMemberModal = openMemberModal;
+        window.closeMemberModal = closeMemberModal; window.saveMember = saveMember; window.deleteMember = deleteMember;
+        window.startSession = startSession; window.openTableModal = openTableModal; window.addItem = addItem;
+        window.closeTableModal = closeTableModal; window.confirmEndSession = confirmEndSession; window.toggleDropdown = toggleDropdown;
+        window.closeAllDropdowns = closeAllDropdowns; window.openReservationModal = openReservationModal;
+        window.closeReservationModal = closeReservationModal; window.saveReservation = saveReservation; window.setTableStatus = setTableStatus;
+        window.openQuickSale = openQuickSale; window.closeQuickSale = closeQuickSale; window.addToQuickCart = addToQuickCart; window.submitQuickSale = submitQuickSale;
+        // NEW EXPORTS
+        window.deleteProduct = deleteProduct; window.openTransactionModal = openTransactionModal; window.closeTransactionModal = closeTransactionModal;
     </script>
 </body>
 </html>
