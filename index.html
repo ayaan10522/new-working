@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CueZone - Hall Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .tab-active { background-color: white; color: #0f172a; font-weight: 600; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); }
+        .tab-inactive { color: #64748b; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card-container { z-index: 10; }
+        .card-container:hover { z-index: 20; }
+        
+        /* Toast Animation */
+        .toast-enter { transform: translateX(100%); opacity: 0; }
+        .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 0.3s ease-out; }
+        .toast-exit { transform: translateX(0); opacity: 1; }
+        .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 0.3s ease-in; }
+    </style>
+</head>
+<body class="text-slate-800" onclick="closeAllDropdowns()">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 z-[90] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 transform scale-100 transition-transform">
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 text-orange-600">
+                    <i class="fa-solid fa-circle-exclamation text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800" id="confirmTitle">Confirm Action</h3>
+                <p class="text-sm text-slate-500 mt-1" id="confirmMessage">Are you sure you want to proceed?</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+                <button id="confirmBtnAction" class="flex-1 py-2.5 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 shadow-lg shadow-teal-500/30">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="bg-teal-500 text-white p-2 rounded-lg shadow-lg shadow-teal-500/30">
+                        <i class="fa-solid fa-stopwatch text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-900 leading-tight">CueZone</h1>
+                        <p class="text-xs text-slate-500">Hall Management System</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="triggerHardReset()" class="text-xs text-red-400 hover:text-red-600 underline">Reset System</button>
+                    <span class="flex items-center gap-2 text-xs font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                        <span class="relative flex h-2 w-2">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Live
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl border-l-4 border-emerald-500 shadow-sm p-5 flex justify-between items-center">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase">Active Tables</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1" id="statActiveTables">0</p>
+                </div>
+                <div class="bg-emerald-50 p-3 rounded-lg text-emerald-600"><i class="fa-solid fa-chart-line"></i></div>
+            </div>
+            <div class="bg-white rounded-xl border-l-4 border-teal-500 shadow-sm p-5 flex justify-between items-center">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase">Available</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1" id="statAvailableTables">0</p>
+                </div>
+                <div class="bg-teal-50 p-3 rounded-lg text-teal-600"><i class="fa-solid fa-people-group"></i></div>
+            </div>
+            <div class="bg-white rounded-xl border-l-4 border-blue-500 shadow-sm p-5 flex justify-between items-center">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase">Members</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1" id="statTotalMembers">0</p>
+                </div>
+                <div class="bg-blue-50 p-3 rounded-lg text-blue-600"><i class="fa-solid fa-id-card"></i></div>
+            </div>
+            <div class="bg-white rounded-xl border-l-4 border-orange-400 shadow-sm p-5 flex justify-between items-center">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase">Revenue</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1">₹<span id="statRevenue">0</span></p>
+                </div>
+                <div class="bg-orange-50 p-3 rounded-lg text-orange-500"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+            </div>
+        </div>
+
+        <div class="bg-slate-100 p-1 rounded-xl flex mb-8 text-sm overflow-x-auto">
+            <button onclick="switchTab('tables')" id="btn-tables" class="flex-1 py-2 px-4 rounded-lg tab-active whitespace-nowrap transition-all">Tables</button>
+            <button onclick="switchTab('orders')" id="btn-orders" class="flex-1 py-2 px-4 rounded-lg tab-inactive whitespace-nowrap transition-all">Active Orders</button>
+            <button onclick="switchTab('products')" id="btn-products" class="flex-1 py-2 px-4 rounded-lg tab-inactive whitespace-nowrap transition-all">Products</button>
+            <button onclick="switchTab('members')" id="btn-members" class="flex-1 py-2 px-4 rounded-lg tab-inactive whitespace-nowrap transition-all">Members</button>
+        </div>
+
+        <div id="view-tables" class="fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <div><h2 class="text-xl font-bold text-slate-800">Table Management</h2></div>
+                <button onclick="openAddTableModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg shadow-md transition-colors text-sm font-medium"><i class="fa-solid fa-plus"></i> Add Table</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="tablesGrid"></div>
+        </div>
+
+        <div id="view-orders" class="hidden fade-in">
+            <div id="activeOrdersContainer" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 text-center min-h-[400px] flex flex-col justify-center items-center"></div>
+        </div>
+
+        <div id="view-products" class="hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <div><h2 class="text-xl font-bold text-slate-800">Products Inventory</h2></div>
+                <button onclick="openProductModal()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg shadow-md text-sm font-medium"><i class="fa-solid fa-plus"></i> Add Product</button>
+            </div>
+            <div id="productsGrid" class="space-y-8"></div>
+        </div>
+
+        <div id="view-members" class="hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <div><h2 class="text-xl font-bold text-slate-800">Members Directory</h2></div>
+                <button onclick="openMemberModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md text-sm font-medium"><i class="fa-solid fa-user-plus"></i> Add Member</button>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-slate-800 font-semibold border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4">Name</th>
+                            <th class="px-6 py-4">Phone</th>
+                            <th class="px-6 py-4">Total Spend</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersList" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="reservationModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Reserve Table</h3>
+                <button onclick="closeReservationModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveReservation(event)" class="space-y-4">
+                <input type="hidden" id="resTableId">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Customer Name</label>
+                    <input type="text" id="resName" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Reservation Time</label>
+                    <input type="time" id="resTime" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                </div>
+                <button type="submit" class="w-full bg-purple-600 text-white py-2.5 rounded-lg font-medium hover:bg-purple-700">Confirm Reservation</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="memberModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">New Member</h3>
+                <button onclick="closeMemberModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveMember(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Full Name</label>
+                    <input type="text" id="memName" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Phone Number</label>
+                    <input type="tel" id="memPhone" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700">Add Member</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Add Product</h3>
+                <button onclick="closeProductModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveProduct(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Product Name</label>
+                    <input type="text" id="prodName" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Category</label>
+                        <select id="prodCat" class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                            <option value="Beverages">Beverages</option>
+                            <option value="Snacks">Snacks</option>
+                            <option value="Food">Food</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Price (₹)</label>
+                        <input type="number" id="prodPrice" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Icon (Emoji)</label>
+                    <input type="text" id="prodIcon" placeholder="e.g. ☕" class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                </div>
+                <button type="submit" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700">Save Product</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="tableModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-0 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 class="text-lg font-bold" id="modalTableName">Table 1</h3>
+                    <p class="text-xs text-slate-500" id="modalTableTimer">00:00:00</p>
+                </div>
+                <button onclick="closeTableModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto flex-1">
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Add Items</h4>
+                <div class="grid grid-cols-3 gap-3 mb-6" id="modalProductList"></div>
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Current Order</h4>
+                <ul id="modalOrderList" class="space-y-2 mb-4 text-sm"></ul>
+            </div>
+            <div class="p-5 border-t border-slate-100 bg-slate-50">
+                <div class="mb-4">
+                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Bill to Member (Optional)</label>
+                     <select id="checkoutMemberSelect" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+                         <option value="">-- Guest (Cash) --</option>
+                         </select>
+                </div>
+                <div class="flex justify-between items-center mb-4 pt-2 border-t border-slate-200">
+                    <span class="text-lg font-bold text-slate-800">Grand Total</span>
+                    <span class="text-2xl font-bold text-teal-600" id="modalGrandTotal">₹0</span>
+                </div>
+                <button onclick="confirmEndSession()" class="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 shadow-lg shadow-red-500/30">
+                    Stop Session & Collect
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="addTableModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Add New Table</h3>
+                <button onclick="closeAddTableModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="saveTable(event)" class="space-y-4">
+                <input type="text" id="tableName" placeholder="Table Name" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="tableType" class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                        <option value="Snooker">Snooker</option>
+                        <option value="Pool">Pool</option>
+                    </select>
+                    <input type="number" id="tableRate" value="300" placeholder="Rate/Hr" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                </div>
+                <button type="submit" class="w-full bg-slate-800 text-white py-2.5 rounded-lg font-medium hover:bg-slate-900">Create Table</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. POPUP & TOAST SYSTEM ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = type === 'success' ? 'bg-teal-500 text-white' : 'bg-red-500 text-white';
+            const icon = type === 'success' ? '<i class="fa-solid fa-check-circle"></i>' : '<i class="fa-solid fa-circle-exclamation"></i>';
+            
+            toast.className = `${colors} px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[250px] toast-enter pointer-events-auto`;
+            toast.innerHTML = `${icon} <span class="font-medium text-sm">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // Animation Trigger
+            requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); });
+            
+            // Auto Remove
+            setTimeout(() => {
+                toast.classList.remove('toast-enter-active');
+                toast.classList.add('toast-exit-active');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        let confirmCallback = null;
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirmTitle').innerText = title;
+            document.getElementById('confirmMessage').innerText = message;
+            confirmCallback = callback;
+            document.getElementById('confirmModal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            confirmCallback = null;
+        }
+
+        document.getElementById('confirmBtnAction').addEventListener('click', () => {
+            if(confirmCallback) confirmCallback();
+            closeConfirmModal();
+        });
+
+        // --- 2. DATA & STATE ---
+        const defaultTables = [
+            { id: 1, name: 'Snooker Table 1', type: 'Snooker', rate: 300, status: 'available', startTime: null, orders: [], reservation: null }
+        ];
+        const defaultProducts = [
+            { id: 1, name: 'Chai', category: 'Beverages', price: 20, icon: '☕' }
+        ];
+
+        let appData = { tables: [], products: [], members: [], totalRevenue: 0 };
+        let activeModalTableId = null;
+
+        function init() {
+            try {
+                // Load & Repair Data
+                const rawTables = localStorage.getItem('cz_tables');
+                const rawProducts = localStorage.getItem('cz_products');
+                const rawMembers = localStorage.getItem('cz_members');
+                const rawRevenue = localStorage.getItem('cz_revenue');
+
+                appData.tables = rawTables ? JSON.parse(rawTables) : defaultTables;
+                appData.products = rawProducts ? JSON.parse(rawProducts) : defaultProducts;
+                appData.members = rawMembers ? JSON.parse(rawMembers) : [];
+                appData.totalRevenue = rawRevenue ? parseFloat(rawRevenue) : 0;
+
+                // Self-repair legacy data
+                appData.tables = appData.tables.map(t => ({
+                    ...t,
+                    orders: Array.isArray(t.orders) ? t.orders : [],
+                    reservation: t.reservation || null // Ensure reservation field exists
+                }));
+
+                renderDashboard();
+                renderTables();
+                renderProducts();
+                renderMembers();
+                
+                setInterval(updateTimers, 1000);
+            } catch (e) {
+                console.error(e);
+                showToast("Data Corruption Detected. Please Reset.", "error");
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('cz_tables', JSON.stringify(appData.tables));
+            localStorage.setItem('cz_products', JSON.stringify(appData.products));
+            localStorage.setItem('cz_members', JSON.stringify(appData.members));
+            localStorage.setItem('cz_revenue', appData.totalRevenue);
+            renderDashboard();
+        }
+
+        function triggerHardReset() {
+            showConfirm("Reset System?", "This will permanently erase all data. Irreversible!", () => {
+                localStorage.clear();
+                location.reload();
+            });
+        }
+
+        // --- 3. NAVIGATION ---
+        function switchTab(tabName) {
+            ['tables', 'orders', 'products', 'members'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`btn-${t}`).className = "flex-1 py-2 px-4 rounded-lg tab-inactive whitespace-nowrap transition-all";
+            });
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            document.getElementById(`btn-${tabName}`).className = "flex-1 py-2 px-4 rounded-lg tab-active whitespace-nowrap transition-all";
+            if(tabName === 'orders') renderActiveOrders();
+        }
+
+        function renderDashboard() {
+            document.getElementById('statActiveTables').innerText = appData.tables.filter(t => t.status === 'active').length;
+            document.getElementById('statAvailableTables').innerText = appData.tables.filter(t => t.status === 'available').length;
+            document.getElementById('statTotalMembers').innerText = appData.members.length;
+            document.getElementById('statRevenue').innerText = appData.totalRevenue.toLocaleString('en-IN');
+        }
+
+        // --- 4. TABLE MANAGEMENT ---
+        function renderTables() {
+            const container = document.getElementById('tablesGrid');
+            container.innerHTML = '';
+
+            appData.tables.forEach(table => {
+                let statusColor, statusText, btnAction;
+                let reservedInfo = '';
+
+                if (table.status === 'available') {
+                    statusColor = 'text-emerald-600 bg-emerald-50'; statusText = 'Available';
+                    btnAction = `<button onclick="startSession(${table.id})" class="w-full mt-4 bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-lg flex justify-center items-center gap-2"><i class="fa-solid fa-play"></i> Start Session</button>`;
+                } else if (table.status === 'active') {
+                    statusColor = 'text-orange-600 bg-orange-50'; statusText = 'Occupied';
+                    btnAction = `<button onclick="openTableModal(${table.id})" class="w-full mt-4 bg-slate-800 hover:bg-slate-900 text-white font-medium py-2.5 rounded-lg flex justify-center items-center gap-2 shadow-lg shadow-slate-500/20"><i class="fa-solid fa-list-check"></i> Manage Order</button>`;
+                } else if (table.status === 'reserved') {
+                    statusColor = 'text-purple-600 bg-purple-50'; statusText = 'Reserved';
+                    if(table.reservation) {
+                        reservedInfo = `<div class="mt-2 text-xs bg-purple-100 text-purple-700 p-2 rounded text-center">
+                            <span class="font-bold">${table.reservation.name}</span> @ ${table.reservation.time}
+                        </div>`;
+                    }
+                    btnAction = `<button onclick="setTableStatus(${table.id}, 'available')" class="w-full mt-4 bg-slate-100 text-slate-500 font-medium py-2.5 rounded-lg hover:bg-slate-200">Cancel Reservation</button>`;
+                } else {
+                    statusColor = 'text-red-600 bg-red-50'; statusText = 'Maintenance';
+                    btnAction = `<button onclick="setTableStatus(${table.id}, 'available')" class="w-full mt-4 bg-slate-100 text-slate-500 font-medium py-2.5 rounded-lg hover:bg-slate-200">Finish Maintenance</button>`;
+                }
+
+                // Dropdown Logic
+                let dropdownHtml = '';
+                if(table.status !== 'active') {
+                    dropdownHtml = `
+                    <div id="dropdown-${table.id}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl border border-slate-100 py-1 z-50">
+                        <button onclick="setTableStatus(${table.id}, 'available')" class="w-full text-left px-4 py-2 text-xs hover:bg-slate-50">Mark Available</button>
+                        <button onclick="openReservationModal(${table.id})" class="w-full text-left px-4 py-2 text-xs hover:bg-purple-50 text-purple-600">Reserve with Time</button>
+                        <button onclick="setTableStatus(${table.id}, 'maintenance')" class="w-full text-left px-4 py-2 text-xs hover:bg-red-50 text-red-600">Maintenance</button>
+                        <div class="border-t my-1"></div>
+                        <button onclick="deleteTable(${table.id})" class="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50">Delete Table</button>
+                    </div>`;
+                }
+
+                const timerDisplay = (table.status === 'active' && table.startTime) 
+                    ? `<div class="mt-4 text-center py-2 bg-slate-50 rounded border border-slate-100"><div class="text-2xl font-mono font-bold text-slate-800" id="timer-${table.id}">00:00:00</div><div class="text-xs text-slate-500">Bill: ₹<span id="cost-${table.id}">0</span></div></div>` 
+                    : '';
+
+                container.innerHTML += `
+                <div class="card-container relative bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800">${table.name}</h3>
+                            <p class="text-sm text-slate-500">${table.type} • ₹${table.rate}/Hr</p>
+                        </div>
+                        <div class="relative">
+                            <button onclick="toggleDropdown(event, ${table.id})" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-ellipsis-vertical px-2"></i></button>
+                            ${dropdownHtml}
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${statusColor}"><i class="fa-solid fa-circle text-[8px]"></i> ${statusText}</span>
+                    ${reservedInfo}
+                    ${timerDisplay}
+                    ${btnAction}
+                </div>`;
+            });
+        }
+
+        function toggleDropdown(e, id) {
+            e.stopPropagation();
+            closeAllDropdowns();
+            const el = document.getElementById(`dropdown-${id}`);
+            if(el) el.classList.remove('hidden');
+        }
+        function closeAllDropdowns() { document.querySelectorAll('[id^="dropdown-"]').forEach(el => el.classList.add('hidden')); }
+
+        // --- 5. RESERVATION LOGIC ---
+        function openReservationModal(id) {
+            closeAllDropdowns();
+            document.getElementById('resTableId').value = id;
+            document.getElementById('reservationModal').classList.remove('hidden');
+        }
+        function closeReservationModal() { document.getElementById('reservationModal').classList.add('hidden'); }
+        
+        function saveReservation(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('resTableId').value);
+            const name = document.getElementById('resName').value;
+            const time = document.getElementById('resTime').value;
+
+            const table = appData.tables.find(t => t.id === id);
+            table.status = 'reserved';
+            table.reservation = { name, time };
+            
+            saveData();
+            renderTables();
+            closeReservationModal();
+            showToast(`Table reserved for ${name} at ${time}`);
+            e.target.reset();
+        }
+
+        // --- 6. MEMBER LOGIC ---
+        function renderMembers() {
+            const list = document.getElementById('membersList');
+            list.innerHTML = '';
+            appData.members.forEach(m => {
+                list.innerHTML += `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-6 py-4 font-medium text-slate-800">${m.name}</td>
+                    <td class="px-6 py-4">${m.phone}</td>
+                    <td class="px-6 py-4 text-emerald-600 font-bold">₹${m.totalSpend.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="deleteMember(${m.id})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+        function openMemberModal() { document.getElementById('memberModal').classList.remove('hidden'); }
+        function closeMemberModal() { document.getElementById('memberModal').classList.add('hidden'); }
+        
+        function saveMember(e) {
+            e.preventDefault();
+            const name = document.getElementById('memName').value;
+            const phone = document.getElementById('memPhone').value;
+            appData.members.push({ id: Date.now(), name, phone, totalSpend: 0 });
+            saveData();
+            renderMembers();
+            closeMemberModal();
+            showToast("Member Added Successfully");
+            e.target.reset();
+        }
+        function deleteMember(id) {
+            showConfirm("Delete Member?", "This cannot be undone.", () => {
+                appData.members = appData.members.filter(m => m.id !== id);
+                saveData();
+                renderMembers();
+                showToast("Member Deleted");
+            });
+        }
+
+        // --- 7. SESSION & CHECKOUT LOGIC ---
+        function startSession(id) {
+            const table = appData.tables.find(t => t.id === id);
+            table.status = 'active';
+            table.startTime = Date.now();
+            table.orders = [];
+            table.reservation = null; // Clear reservation if starting
+            saveData();
+            renderTables();
+            showToast("Session Started");
+        }
+
+        function openTableModal(id) {
+            activeModalTableId = id;
+            const table = appData.tables.find(t => t.id === id);
+            document.getElementById('modalTableName').innerText = table.name;
+            document.getElementById('tableModal').classList.remove('hidden');
+            
+            // Render Products
+            const pList = document.getElementById('modalProductList');
+            pList.innerHTML = '';
+            appData.products.forEach(p => {
+                pList.innerHTML += `<button onclick="addItem(${p.id})" class="flex flex-col items-center p-2 border border-slate-200 rounded hover:bg-teal-50"><span class="text-xl">${p.icon}</span><span class="text-[10px] font-bold">${p.name}</span><span class="text-[10px]">₹${p.price}</span></button>`;
+            });
+
+            // Render Member Dropdown
+            const mSelect = document.getElementById('checkoutMemberSelect');
+            mSelect.innerHTML = '<option value="">-- Guest (Cash) --</option>';
+            appData.members.forEach(m => {
+                mSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+            });
+
+            renderOrderList();
+        }
+
+        function addItem(pid) {
+            const table = appData.tables.find(t => t.id === activeModalTableId);
+            const product = appData.products.find(p => p.id === pid);
+            const existing = table.orders.find(o => o.id === pid);
+            if(existing) existing.qty++; else table.orders.push({...product, qty: 1});
+            saveData();
+            renderOrderList();
+        }
+
+        function renderOrderList() {
+            if(!activeModalTableId) return;
+            const table = appData.tables.find(t => t.id === activeModalTableId);
+            const list = document.getElementById('modalOrderList');
+            list.innerHTML = table.orders.length ? '' : '<li class="text-slate-400 italic text-center">No items.</li>';
+            table.orders.forEach(item => {
+                list.innerHTML += `<li class="flex justify-between bg-slate-50 p-2 rounded"><span class="text-xs font-bold w-6 bg-white border text-center rounded">${item.qty}</span> <span>${item.name}</span> <span>₹${item.price*item.qty}</span></li>`;
+            });
+            updateTimers();
+        }
+
+        function confirmEndSession() {
+            showConfirm("End Session?", "Stop timer and collect payment?", endSessionLogic);
+        }
+
+        function endSessionLogic() {
+            const table = appData.tables.find(t => t.id === activeModalTableId);
+            const diff = Date.now() - table.startTime;
+            const hours = diff / (1000 * 60 * 60);
+            const cost = Math.ceil(hours * table.rate);
+            const itemsCost = table.orders.reduce((s, i) => s + (i.price * i.qty), 0);
+            const total = cost + itemsCost;
+
+            // Handle Member Assignment
+            const memberId = document.getElementById('checkoutMemberSelect').value;
+            if (memberId) {
+                const member = appData.members.find(m => m.id == memberId);
+                if (member) {
+                    member.totalSpend += total;
+                    showToast(`Bill assigned to ${member.name}`);
+                }
+            }
+
+            appData.totalRevenue += total;
+            table.status = 'available'; table.startTime = null; table.orders = [];
+            
+            saveData();
+            closeTableModal();
+            renderTables();
+            renderMembers(); // Refresh member stats
+            showToast(`Collected ₹${total}`, "success");
+        }
+
+        function closeTableModal() { document.getElementById('tableModal').classList.add('hidden'); activeModalTableId = null; }
+
+        // --- 8. UTILS & TIMERS ---
+        function updateTimers() {
+            const now = Date.now();
+            appData.tables.forEach(table => {
+                if(table.status === 'active' && table.startTime) {
+                    const diff = now - table.startTime;
+                    const h = Math.floor(diff/3600000).toString().padStart(2,'0');
+                    const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
+                    const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
+                    
+                    const cost = Math.ceil((diff/3600000) * table.rate);
+                    
+                    const elT = document.getElementById(`timer-${table.id}`);
+                    const elC = document.getElementById(`cost-${table.id}`);
+                    if(elT) elT.innerText = `${h}:${m}:${s}`;
+                    if(elC) elC.innerText = cost;
+
+                    if(activeModalTableId === table.id) {
+                        const itemsCost = table.orders.reduce((sum, i) => sum + (i.price*i.qty), 0);
+                        document.getElementById('modalTableTimer').innerText = `${h}:${m}:${s}`;
+                        document.getElementById('modalGrandTotal').innerText = `₹${cost + itemsCost}`;
+                    }
+                }
+            });
+        }
+
+        // --- 9. HELPERS (Products/Tables) ---
+        function openAddTableModal() { document.getElementById('addTableModal').classList.remove('hidden'); }
+        function closeAddTableModal() { document.getElementById('addTableModal').classList.add('hidden'); }
+        function saveTable(e) {
+            e.preventDefault();
+            appData.tables.push({ 
+                id: Date.now(), 
+                name: document.getElementById('tableName').value, 
+                type: document.getElementById('tableType').value, 
+                rate: document.getElementById('tableRate').value, 
+                status: 'available', startTime: null, orders: [], reservation: null 
+            });
+            saveData(); renderTables(); closeAddTableModal(); showToast("Table Created");
+        }
+        function deleteTable(id) {
+            showConfirm("Delete Table?", "Permanent action.", () => {
+                appData.tables = appData.tables.filter(t => t.id !== id);
+                saveData(); renderTables(); showToast("Table Deleted");
+            });
+        }
+        function openProductModal() { document.getElementById('productModal').classList.remove('hidden'); }
+        function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
+        function saveProduct(e) {
+            e.preventDefault();
+            appData.products.push({
+                id: Date.now(),
+                name: document.getElementById('prodName').value,
+                category: document.getElementById('prodCat').value,
+                price: document.getElementById('prodPrice').value,
+                icon: document.getElementById('prodIcon').value
+            });
+            saveData(); renderProducts(); closeProductModal(); showToast("Product Added");
+        }
+        function renderProducts() {
+            const div = document.getElementById('productsGrid'); div.innerHTML = '';
+            const cats = [...new Set(appData.products.map(p => p.category))];
+            cats.forEach(c => {
+                const prods = appData.products.filter(p => p.category === c);
+                div.innerHTML += `<div class="mb-4"><h3 class="font-bold mb-2">${c}</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-4">${prods.map(p => `
+                    <div class="bg-white p-3 rounded shadow border flex justify-between items-center">
+                        <div class="flex gap-2 items-center"><span class="text-xl">${p.icon}</span> <div class="text-sm font-bold">${p.name}</div></div>
+                        <div class="text-orange-500 font-bold">₹${p.price}</div>
+                    </div>`).join('')}</div></div>`;
+            });
+        }
+        function renderActiveOrders() {
+            const c = document.getElementById('activeOrdersContainer');
+            const actives = appData.tables.filter(t => t.status === 'active');
+            if(!actives.length) { c.innerHTML = '<p class="text-slate-400">No active sessions</p>'; return; }
+            c.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">' + actives.map(t => `<div class="bg-white p-4 border rounded shadow-sm"><div class="font-bold flex justify-between"><span>${t.name}</span> <span class="text-teal-600">Active</span></div><button onclick="openTableModal(${t.id})" class="mt-2 text-xs bg-slate-800 text-white px-2 py-1 rounded">View</button></div>`).join('') + '</div>';
+        }
+        function setTableStatus(id, status) {
+            const table = appData.tables.find(t => t.id === id);
+            table.status = status;
+            table.reservation = null;
+            saveData(); renderTables(); showToast(`Status updated to ${status}`);
+        }
+
+        init();
+    </script>
+</body>
+</html>
