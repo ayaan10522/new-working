@@ -3,164 +3,395 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CueZone - Member Registration</title>
+    <title>CueZone Member Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        /* Toast Animation */
-        .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 100; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none; }
-        .toast-enter { transform: translateX(100%); opacity: 0; }
-        .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 0.3s ease-out; }
-        .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 0.3s ease-in; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Style for the transaction table */
+        .txn-table { border-collapse: separate; border-spacing: 0 10px; }
+        .txn-row { transition: all 0.2s; }
+        .txn-row:hover { background-color: #f1f5f9; transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .modal { transition: opacity 0.25s ease; }
     </style>
 </head>
-<body>
+<body class="text-slate-800">
 
-    <!-- TOAST CONTAINER -->
-    <div id="toast-container" class="toast-container"></div>
-
-    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-slate-200">
-        <div class="text-center mb-6">
-             <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600">
-                <i class="fa-solid fa-user-plus text-xl"></i>
+    <!-- Header Nav -->
+    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-teal-500 text-white p-2 rounded-lg shadow-lg shadow-teal-500/30">
+                        <i class="fa-solid fa-stopwatch text-xl"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-slate-900 leading-tight">CueZone Member Portal</h1>
+                </div>
+                <button id="logoutBtn" onclick="logout()" class="text-sm font-medium text-slate-500 hover:text-red-500 hidden transition-colors">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+                </button>
             </div>
-            <h1 class="text-2xl font-bold text-slate-800">Become a Member</h1>
-            <p class="text-sm text-slate-500 mt-1">Enter your details to register or log in.</p>
         </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-[80vh]">
         
-        <form id="memberForm" class="space-y-4" onsubmit="registerMember(event)">
-            <div>
-                <label for="memberName" class="block text-xs font-medium text-slate-500 mb-1">Full Name</label>
-                <input type="text" id="memberName" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-blue-500 transition" placeholder="Your Name">
+        <!-- Login View -->
+        <div id="loginView" class="fade-in max-w-lg mx-auto bg-white p-8 sm:p-10 rounded-xl shadow-2xl border border-slate-200">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-3">👋</div>
+                <h2 class="text-2xl font-bold text-slate-800">Welcome Back, Member</h2>
+                <p class="text-slate-500 mt-1">View your spending and transaction history.</p>
             </div>
-            <div>
-                <label for="memberPhone" class="block text-xs font-medium text-slate-500 mb-1">Phone Number</label>
-                <input type="tel" id="memberPhone" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-blue-500 transition" placeholder="10-digit Phone Number">
+            <form onsubmit="loginMember(event)" class="space-y-6">
+                <div>
+                    <label for="memberName" class="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                    <input type="text" id="memberName" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" required placeholder="Enter your registered name">
+                </div>
+                <div>
+                    <label for="memberPhone" class="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
+                    <input type="tel" id="memberPhone" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" required placeholder="Enter your registered phone number">
+                </div>
+                <div id="loginError" class="text-red-500 text-sm font-medium hidden"></div>
+                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg shadow-lg shadow-teal-500/30 transition-colors">
+                    <i class="fa-solid fa-sign-in-alt mr-2"></i> Access Portal
+                </button>
+            </form>
+        </div>
+
+        <!-- Member Dashboard View -->
+        <div id="dashboardView" class="fade-in hidden">
+            
+            <!-- Member Summary Card -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-teal-600 text-white p-6 rounded-xl shadow-lg md:col-span-2">
+                    <p class="text-sm font-medium opacity-80">Logged in as</p>
+                    <h2 class="text-3xl font-bold mt-1" id="memberDashboardName"></h2>
+                    <p class="text-xs opacity-70 mt-1" id="memberDashboardPhone"></p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg border-l-4 border-orange-500 p-6 flex flex-col justify-center">
+                    <p class="text-sm font-medium text-slate-500 uppercase">Total Lifetime Spend</p>
+                    <p class="text-3xl font-bold text-slate-800 mt-1">₹<span id="memberTotalSpend">0</span></p>
+                </div>
             </div>
-            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-colors flex items-center justify-center gap-2">
-                <i class="fa-solid fa-right-to-bracket"></i>
-                Register / Log In
-            </button>
-        </form>
+
+            <!-- Transaction History -->
+            <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-teal-600"></i> Transaction History
+                </h3>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full txn-table text-left text-sm text-slate-600 min-w-[700px]">
+                        <thead class="text-xs font-semibold uppercase text-slate-500 bg-slate-50 rounded-lg">
+                            <tr>
+                                <th class="p-3 rounded-l-lg">Date</th>
+                                <th class="p-3">Type</th>
+                                <th class="p-3">Summary</th>
+                                <th class="p-3">Amount</th>
+                                <th class="p-3 text-right rounded-r-lg">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberTransactionsList" class="divide-y divide-slate-100">
+                            <!-- Transactions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="noTxnMessage" class="hidden text-center py-10 text-slate-400">
+                    <i class="fa-solid fa-receipt text-4xl mb-3"></i>
+                    <p>No transactions found for your account.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Transaction Details Modal (Same as Admin, but cleaner) -->
+    <div id="transactionDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-[85] hidden flex items-center justify-center backdrop-blur-sm modal">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-800">Transaction Details</h3>
+                <button onclick="closeTransactionModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div id="txnModalContent" class="space-y-4">
+                    <!-- Content populated via JS -->
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-200 bg-slate-50 text-right">
+                <button onclick="closeTransactionModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-lg text-sm font-medium">Close</button>
+            </div>
+        </div>
     </div>
 
-    <!-- JavaScript Logic -->
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, setDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // setLogLevel('debug'); // Enable debug logging for Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-        // --- 1. FIREBASE & DATA SETUP ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-cuezone-app';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // CONFIG (Use the same configuration as the admin panel)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkANjCfEkI8OrzLhF84pljz82rCVZ_aek",
+            authDomain: "cue-zone.firebaseapp.com",
+            databaseURL: "https://cue-zone-default-rtdb.firebaseio.com",
+            projectId: "cue-zone",
+            storageBucket: "cue-zone.firebasestorage.app",
+            messagingSenderId: "440447135356",
+            appId: "1:440447135356:web:fd3441d5765ea65a0a63f9",
+            measurementId: "G-7FNBDHWD59"
+        };
 
-        let db, auth;
-        const getPublicMembersCol = () => collection(db, `artifacts/${appId}/public/data/members`);
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            const colors = type === 'success' ? 'bg-teal-500 text-white' : 'bg-red-500 text-white';
-            const icon = type === 'success' ? '<i class="fa-solid fa-check-circle"></i>' : '<i class="fa-solid fa-circle-exclamation"></i>';
-            
-            toast.className = `${colors} px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[250px] toast-enter pointer-events-auto`;
-            toast.innerHTML = `${icon} <span class="font-medium text-sm">${message}</span>`;
-            
-            container.appendChild(toast);
-            
-            requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); });
-            
-            setTimeout(() => {
-                toast.classList.remove('toast-enter-active');
-                toast.classList.add('toast-exit-active');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
+        // STATE
+        let appData = { members: [], transactions: [] };
+        let currentMember = null;
+        let isDataLoaded = false;
 
-        async function initFirebase() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+        // UI ELEMENTS
+        const loginView = document.getElementById('loginView');
+        const dashboardView = document.getElementById('dashboardView');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const loginError = document.getElementById('loginError');
 
-                // Customer app signs in anonymously as it doesn't need manager privileges
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+        // FIREBASE LISTENERS (READ-ONLY)
+        onValue(ref(db, 'members'), snap => {
+            const val = snap.val();
+            appData.members = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+            isDataLoaded = true;
+            if (currentMember) checkSession(); // Re-render if already logged in and data updates
+        });
 
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        showToast("System ready.", "success");
-                    } else {
-                        showToast("Authentication failed.", "error");
-                    }
-                });
-                
-            } catch (e) {
-                console.error("Firebase Initialization Error:", e);
-                showToast("Firebase failed to load. Check console.", "error");
-            }
-        }
-        
-        async function registerMember(e) {
+        onValue(ref(db, 'transactions'), snap => {
+            const val = snap.val();
+            appData.transactions = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+            isDataLoaded = true;
+            if (currentMember) renderMemberDashboard(); // Re-render if already logged in and data updates
+        });
+
+        // AUTHENTICATION LOGIC (Soft Login)
+        function loginMember(e) {
             e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
             
             const name = document.getElementById('memberName').value.trim();
             const phone = document.getElementById('memberPhone').value.trim();
-            
-            if (!name || !phone) {
-                showToast("Name and Phone are required.", "error");
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Register / Log In';
+
+            if (!isDataLoaded) {
+                loginError.classList.remove('hidden');
+                loginError.innerText = 'Data loading, please wait a moment...';
                 return;
             }
-            
-            try {
-                // 1. Check if member already exists by phone number
-                const membersCol = getPublicMembersCol();
-                const q = query(membersCol, where("phone", "==", phone));
-                const snapshot = await getDocs(q);
-                
-                if (snapshot.empty) {
-                    // 2. New member: Add new document
-                    const newMember = {
-                        name: name,
-                        phone: phone,
-                        totalSpend: 0,
-                        registeredAt: serverTimestamp()
-                    };
-                    await setDoc(doc(membersCol), newMember);
-                    showToast(`Welcome, ${name}! Registration successful.`, "success");
-                } else {
-                    // 3. Existing member: Update name (if changed) and last active time
-                    const memberDoc = snapshot.docs[0];
-                    await setDoc(memberDoc.ref, { 
-                        name: name, // Allow user to update their name
-                        lastLogin: serverTimestamp()
-                    }, { merge: true });
-                    showToast(`Welcome back, ${name}! Logged in.`, "success");
-                }
-            } catch (e) {
-                console.error("Registration Error:", e);
-                showToast("An error occurred during registration. Please try again.", "error");
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Register / Log In';
+
+            // Find member by matching both name AND phone
+            const member = appData.members.find(m => 
+                m.name.toLowerCase() === name.toLowerCase() && 
+                m.phone === phone
+            );
+
+            if (member) {
+                currentMember = member;
+                localStorage.setItem('currentMemberName', member.name);
+                localStorage.setItem('currentMemberPhone', member.phone);
+                loginError.classList.add('hidden');
+                switchView('dashboard');
+                renderMemberDashboard();
+            } else {
+                loginError.classList.remove('hidden');
+                loginError.innerText = 'Invalid name or phone number. Please try again.';
             }
         }
 
-        initFirebase();
+        function logout() {
+            currentMember = null;
+            localStorage.removeItem('currentMemberName');
+            localStorage.removeItem('currentMemberPhone');
+            switchView('login');
+            // Clear inputs just in case
+            document.getElementById('memberName').value = '';
+            document.getElementById('memberPhone').value = '';
+        }
+
+        function switchView(view) {
+            if (view === 'dashboard') {
+                loginView.classList.add('hidden');
+                dashboardView.classList.remove('hidden');
+                logoutBtn.classList.remove('hidden');
+            } else {
+                loginView.classList.remove('hidden');
+                dashboardView.classList.add('hidden');
+                logoutBtn.classList.add('hidden');
+            }
+        }
+
+        // DASHBOARD RENDERING
+        function renderMemberDashboard() {
+            if (!currentMember) return;
+
+            document.getElementById('memberDashboardName').innerText = currentMember.name;
+            document.getElementById('memberDashboardPhone').innerText = currentMember.phone;
+            document.getElementById('memberTotalSpend').innerText = (currentMember.totalSpend || 0).toLocaleString('en-IN');
+            
+            // Filter transactions for the current member by NAME (as recorded in the transaction data)
+            const memberTxns = appData.transactions.filter(t => t.member === currentMember.name);
+            const sortedTxns = [...memberTxns].sort((a,b) => b.id - a.id);
+
+            const list = document.getElementById('memberTransactionsList');
+            list.innerHTML = '';
+
+            if (sortedTxns.length === 0) {
+                list.classList.add('hidden');
+                document.getElementById('noTxnMessage').classList.remove('hidden');
+                return;
+            }
+
+            list.classList.remove('hidden');
+            document.getElementById('noTxnMessage').classList.add('hidden');
+
+            sortedTxns.forEach(t => {
+                let badgeColor = t.type === 'Table Session' ? 'bg-teal-100 text-teal-800' : 'bg-indigo-100 text-indigo-800';
+                list.innerHTML += `
+                <tr class="txn-row bg-white">
+                    <td class="p-3 text-xs text-slate-500 rounded-l-lg whitespace-nowrap">${t.date}</td>
+                    <td class="p-3 whitespace-nowrap"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${t.type}</span></td>
+                    <td class="p-3 text-sm font-medium text-slate-700 max-w-[300px] truncate">${t.summary}</td>
+                    <td class="p-3 font-bold text-slate-800 whitespace-nowrap">₹${t.amount.toLocaleString('en-IN')}</td>
+                    <td class="p-3 text-right rounded-r-lg whitespace-nowrap">
+                        <button onclick="openTransactionModal(${t.id})" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md border border-slate-300 font-medium transition-colors">View Details</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        // DETAILED TRANSACTION MODAL
+        function openTransactionModal(txnId) {
+            const txn = appData.transactions.find(t => t.id === txnId);
+            if(!txn) return;
+
+            const content = document.getElementById('txnModalContent');
+            const items = txn.items || [];
+            const meta = txn.meta || {};
+
+            let html = `
+                <div class="flex justify-between border-b pb-4 mb-4">
+                    <div>
+                        <p class="text-sm text-slate-500">Transaction ID</p>
+                        <p class="font-mono text-xs text-slate-400">#${txn.id}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-slate-500">Date</p>
+                        <p class="text-sm font-medium">${txn.date}</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-slate-50 p-3 rounded">
+                        <p class="text-xs text-slate-500 uppercase font-bold">Type</p>
+                        <p class="text-sm font-medium text-slate-800">${txn.type}</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded">
+                        <p class="text-xs text-slate-500 uppercase font-bold">Member</p>
+                        <p class="text-sm font-medium text-slate-800">${txn.member}</p>
+                    </div>
+                </div>
+            `;
+
+            // If it's a table session, show table details
+            if(txn.type === 'Table Session' && meta.tableName) {
+                html += `
+                <div class="mb-4 border border-teal-100 bg-teal-50 rounded-lg p-3">
+                    <h4 class="text-sm font-bold text-teal-800 mb-2 border-b border-teal-200 pb-1">Table Session Details</h4>
+                    <div class="flex justify-between text-sm mb-1"><span>Table</span> <span class="font-medium">${meta.tableName}</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span>Duration</span> <span class="font-medium">${meta.duration}</span></div>
+                    <div class="flex justify-between text-sm"><span>Table Cost</span> <span class="font-bold">₹${meta.tableCost}</span></div>
+                </div>
+                `;
+            }
+
+            // Itemized List
+            if(items.length > 0) {
+                html += `<h4 class="text-sm font-bold text-slate-700 mb-2">Itemized Breakdown</h4>
+                <div class="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden mb-4">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-100 text-slate-500 text-xs">
+                            <tr><th class="p-2 text-left">Item</th><th class="p-2 text-center">Qty</th><th class="p-2 text-right">Total</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">`;
+                
+                let itemsTotal = 0;
+                items.forEach(i => {
+                    const lineTotal = i.price * i.qty;
+                    itemsTotal += lineTotal;
+                    html += `<tr>
+                        <td class="p-2 text-slate-700">${i.name}</td>
+                        <td class="p-2 text-center text-slate-500">x${i.qty}</td>
+                        <td class="p-2 text-right text-slate-700">₹${lineTotal}</td>
+                    </tr>`;
+                });
+                
+                html += `</tbody>
+                        <tfoot class="bg-slate-50 font-medium">
+                            <tr><td colspan="2" class="p-2 text-right text-slate-500">Items Total:</td><td class="p-2 text-right">₹${itemsTotal.toLocaleString('en-IN')}</td></tr>
+                        </tfoot>
+                    </table>
+                </div>`;
+            } else {
+                html += `<p class="text-sm text-slate-400 italic mb-4">Only table charges were incurred.</p>`;
+            }
+
+            // Grand Total
+            html += `
+                <div class="border-t-2 border-slate-200 pt-4 flex justify-between items-center">
+                    <span class="text-lg font-bold text-slate-700">Total Paid</span>
+                    <span class="text-2xl font-bold text-emerald-600">₹${txn.amount.toLocaleString('en-IN')}</span>
+                </div>
+            `;
+
+            content.innerHTML = html;
+            document.getElementById('transactionDetailsModal').classList.remove('hidden');
+        }
+
+        function closeTransactionModal() { document.getElementById('transactionDetailsModal').classList.add('hidden'); }
+
+
+        // INITIAL CHECK
+        function checkSession() {
+            const storedName = localStorage.getItem('currentMemberName');
+            const storedPhone = localStorage.getItem('currentMemberPhone');
+
+            if (storedName && storedPhone && appData.members.length > 0) {
+                 const member = appData.members.find(m => 
+                    m.name === storedName && 
+                    m.phone === storedPhone
+                );
+                
+                if (member) {
+                    currentMember = member;
+                    switchView('dashboard');
+                    renderMemberDashboard();
+                    return;
+                }
+            }
+            switchView('login');
+        }
+
+        // Wait for data to load, then check session
+        const interval = setInterval(() => {
+            if (isDataLoaded) {
+                clearInterval(interval);
+                checkSession();
+            }
+        }, 200);
+
+        // ================= GLOBAL EXPORTS =================
+        window.loginMember = loginMember;
+        window.logout = logout;
+        window.openTransactionModal = openTransactionModal;
+        window.closeTransactionModal = closeTransactionModal;
     </script>
 </body>
 </html>
