@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CueZone - Member Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        /* Toast Animation */
+        .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 100; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none; }
+        .toast-enter { transform: translateX(100%); opacity: 0; }
+        .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 0.3s ease-out; }
+        .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 0.3s ease-in; }
+    </style>
+</head>
+<body>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-slate-200">
+        <div class="text-center mb-6">
+             <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600">
+                <i class="fa-solid fa-user-plus text-xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800">Become a Member</h1>
+            <p class="text-sm text-slate-500 mt-1">Enter your details to register or log in.</p>
+        </div>
+        
+        <form id="memberForm" class="space-y-4" onsubmit="registerMember(event)">
+            <div>
+                <label for="memberName" class="block text-xs font-medium text-slate-500 mb-1">Full Name</label>
+                <input type="text" id="memberName" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-blue-500 transition" placeholder="Your Name">
+            </div>
+            <div>
+                <label for="memberPhone" class="block text-xs font-medium text-slate-500 mb-1">Phone Number</label>
+                <input type="tel" id="memberPhone" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-blue-500 transition" placeholder="10-digit Phone Number">
+            </div>
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-colors flex items-center justify-center gap-2">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Register / Log In
+            </button>
+        </form>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, setDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // setLogLevel('debug'); // Enable debug logging for Firebase
+
+        // --- 1. FIREBASE & DATA SETUP ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-cuezone-app';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth;
+        const getPublicMembersCol = () => collection(db, `artifacts/${appId}/public/data/members`);
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = type === 'success' ? 'bg-teal-500 text-white' : 'bg-red-500 text-white';
+            const icon = type === 'success' ? '<i class="fa-solid fa-check-circle"></i>' : '<i class="fa-solid fa-circle-exclamation"></i>';
+            
+            toast.className = `${colors} px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[250px] toast-enter pointer-events-auto`;
+            toast.innerHTML = `${icon} <span class="font-medium text-sm">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); });
+            
+            setTimeout(() => {
+                toast.classList.remove('toast-enter-active');
+                toast.classList.add('toast-exit-active');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Customer app signs in anonymously as it doesn't need manager privileges
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        showToast("System ready.", "success");
+                    } else {
+                        showToast("Authentication failed.", "error");
+                    }
+                });
+                
+            } catch (e) {
+                console.error("Firebase Initialization Error:", e);
+                showToast("Firebase failed to load. Check console.", "error");
+            }
+        }
+        
+        async function registerMember(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+            
+            const name = document.getElementById('memberName').value.trim();
+            const phone = document.getElementById('memberPhone').value.trim();
+            
+            if (!name || !phone) {
+                showToast("Name and Phone are required.", "error");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Register / Log In';
+                return;
+            }
+            
+            try {
+                // 1. Check if member already exists by phone number
+                const membersCol = getPublicMembersCol();
+                const q = query(membersCol, where("phone", "==", phone));
+                const snapshot = await getDocs(q);
+                
+                if (snapshot.empty) {
+                    // 2. New member: Add new document
+                    const newMember = {
+                        name: name,
+                        phone: phone,
+                        totalSpend: 0,
+                        registeredAt: serverTimestamp()
+                    };
+                    await setDoc(doc(membersCol), newMember);
+                    showToast(`Welcome, ${name}! Registration successful.`, "success");
+                } else {
+                    // 3. Existing member: Update name (if changed) and last active time
+                    const memberDoc = snapshot.docs[0];
+                    await setDoc(memberDoc.ref, { 
+                        name: name, // Allow user to update their name
+                        lastLogin: serverTimestamp()
+                    }, { merge: true });
+                    showToast(`Welcome back, ${name}! Logged in.`, "success");
+                }
+            } catch (e) {
+                console.error("Registration Error:", e);
+                showToast("An error occurred during registration. Please try again.", "error");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Register / Log In';
+            }
+        }
+
+        initFirebase();
+    </script>
+</body>
+</html>
